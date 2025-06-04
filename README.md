@@ -7,13 +7,15 @@ Una aplicación de escritorio moderna para gestionar listas de niños, construid
 - ✅ Agregar niños a la lista con nombre y edad
 - ❌ Eliminar niños de la lista individualmente  
 - 🗑️ Limpiar toda la lista con confirmación
-- 💾 Persistencia de datos con localStorage
+- 💾 Persistencia de datos con base de datos SQLite
 - 📊 Contador total de niños
 - 🎨 Interfaz moderna y atractiva con gradientes
 - 💻 Aplicación de escritorio nativa
 - ⚡ Rendimiento rápido con Vite
 - 🇪🇸 Menú en español
 - 🔧 Configuración de distribución para Windows
+- 🌐 API REST con Express.js
+- 🔄 Sincronización automática entre frontend y backend
 
 ## ✅ Estado del Proyecto
 
@@ -40,6 +42,7 @@ Una aplicación de escritorio moderna para gestionar listas de niños, construid
 ## 🛠️ Tecnologías
 
 - **Frontend**: React + TypeScript + Vite
+- **Backend**: Node.js + Express + SQLite
 - **Desktop**: Electron
 - **Estilos**: CSS personalizado con gradientes modernos
 
@@ -62,10 +65,29 @@ npm install
 cd frontend
 npm install
 cd ..
+
+# Instalar dependencias del backend
+cd backend
+npm install
+cd ..
 ```
 
 ### Ejecutar en modo desarrollo
+
+#### Backend (API Server)
 ```bash
+# Navegar al directorio backend
+cd backend
+
+# Ejecutar el servidor de desarrollo
+npm run dev
+```
+
+El servidor API estará disponible en `http://localhost:3001`
+
+#### Frontend (Electron App)
+```bash
+# En la raíz del proyecto
 npm run dev
 ```
 
@@ -85,6 +107,15 @@ npm run dist
 Aplicacion_listaChicos/
 ├── main.js                 # Proceso principal de Electron
 ├── package.json            # Configuración del proyecto
+├── backend/                # API Server (Node.js + Express)
+│   ├── server.js           # Servidor principal
+│   ├── config/             # Configuración de DB y app
+│   ├── controllers/        # Controladores de API
+│   ├── models/             # Modelos de datos
+│   ├── routes/             # Rutas de API
+│   ├── middleware/         # Middleware personalizado
+│   ├── database/           # Base de datos SQLite
+│   └── package.json
 ├── frontend/               # Aplicación React
 │   ├── src/
 │   │   ├── App.tsx         # Componente principal

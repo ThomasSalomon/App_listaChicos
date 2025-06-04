@@ -37,14 +37,19 @@ class Database {
     } catch (error) {
       throw error;
     }
-  }
-  // Inicializar tablas
+  }  // Inicializar tablas
   async initializeTables() {
     return new Promise((resolve, reject) => {
-      // Primero, verificar si necesitamos hacer migración
-      this.db.get("PRAGMA table_info(children)", (err, row) => {
+      // Verificar si la tabla children existe
+      this.db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='children'", (err, row) => {
         if (err) {
+          reject(err);
+          return;
+        }
+        
+        if (!row) {
           // La tabla no existe, crearla desde cero
+          console.log('🔧 Creando tablas desde cero...');
           this.createTablesFromScratch(resolve, reject);
         } else {
           // La tabla existe, verificar si tiene team_id
@@ -66,7 +71,7 @@ class Database {
         }
       });
     });
-  }  // Migrar tabla existente agregando team_id
+  }// Migrar tabla existente agregando team_id
   async migrateExistingTable(resolve, reject) {
     console.log('🔄 Migrando tabla children existente...');
     
