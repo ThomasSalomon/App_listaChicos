@@ -4,6 +4,7 @@ node_modules/
 # Build outputs
 dist/
 dist-final-v10/
+dist-installer/
 build/
 out/
 
@@ -14,6 +15,16 @@ out/
 *.snap
 *.deb
 *.rpm
+
+# Large files (prevent push issues)
+**/electron.exe
+**/electron
+*.tar.gz
+*.zip
+
+# Electron builder cache
+electron-builder-cache/
+.electron-builder/
 
 # OS files
 .DS_Store

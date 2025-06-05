@@ -12,14 +12,18 @@
     "dev:frontend": "cd frontend && npm run dev",
     "build": "cd frontend && npm run build && cd .. && npm install cors express sqlite3 --save && cd backend && npm install --production",
     "dist": "npm run build && electron-builder",
+    "dist:installer": "npm run build && electron-builder --win nsis",
+    "dist:portable": "npm run build && electron-builder --win portable",
+    "dist:both": "npm run build && electron-builder --win nsis portable",
     "dist:win": "npm run build && electron-builder --win",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\"; exit 1"
   },
   "build": {
     "appId": "com.listadechicos.app",
     "productName": "Lista de Chicos",
+    "forceCodeSigning": false,
     "directories": {
-      "output": "dist-final-v10"
+      "output": "dist-installer"
     },
     "files": [
       "main.js",
@@ -33,13 +37,25 @@
       "node_modules/**"
     ],
     "win": {
-      "target": "dir"
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "forceCodeSigning": false,
+      "signAndEditExecutable": false
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "shortcutName": "Lista de Chicos",
+      "displayLanguageSelector": false,
+      "language": "3082"
     }
   },
   "repository": {
