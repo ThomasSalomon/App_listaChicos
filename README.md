@@ -337,8 +337,13 @@ if (!team_id) {
 ```bash
 # 1. Instalar dependencias (solo primera vez)
 npm install
-cd frontend && npm install && cd ..
-cd backend && npm install && cd ..
+cd frontend 
+npm install
+cd ..
+
+cd backend 
+npm install 
+cd ..
 
 # 2. Ejecutar en modo desarrollo
 npm run dev

@@ -3,6 +3,7 @@ node_modules/
 
 # Build outputs
 dist/
+dist-final-v10/
 build/
 out/
 
@@ -44,3 +45,4 @@ coverage/
 
 # Package lock files (opcional, algunos prefieren incluirlos)
 package-lock.json
+
