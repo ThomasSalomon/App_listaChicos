@@ -38,7 +38,6 @@ function App() {
   const [apellido, setApellido] = useState('')
   const [edad, setEdad] = useState('')
   const [showAddChild, setShowAddChild] = useState(false)
-
   // Estados para modales personalizados
   const [showAlert, setShowAlert] = useState(false)
   const [alertMessage, setAlertMessage] = useState('')
@@ -46,6 +45,12 @@ function App() {
   const [showConfirm, setShowConfirm] = useState(false)
   const [confirmMessage, setConfirmMessage] = useState('')
   const [confirmCallback, setConfirmCallback] = useState<(() => void) | null>(null)
+
+  // Estados para crear nuevo equipo
+  const [showCreateTeam, setShowCreateTeam] = useState(false)
+  const [teamName, setTeamName] = useState('')
+  const [teamDescription, setTeamDescription] = useState('')
+  const [teamColor, setTeamColor] = useState('#3B82F6')
 
   // Funciones auxiliares para modales
   const showCustomAlert = (message: string, type: 'info' | 'error' | 'success' | 'warning' = 'info') => {
@@ -188,7 +193,6 @@ function App() {
       }
     })
   }
-
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       addChild()
@@ -204,6 +208,48 @@ function App() {
     setCurrentView('menu')
     setSelectedTeam(null)
     setShowAddChild(false)
+  }
+
+  const createNewTeam = async () => {
+    if (!teamName.trim()) {
+      showCustomAlert('El nombre del equipo es obligatorio', 'warning')
+      return
+    }
+
+    if (teamName.trim().length < 2 || teamName.trim().length > 50) {
+      showCustomAlert('El nombre debe tener entre 2 y 50 caracteres', 'warning')
+      return
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/teams`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },        body: JSON.stringify({
+          nombre: teamName.trim(),
+          descripcion: teamDescription.trim(),
+          color: teamColor
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Error al crear equipo')
+      }
+
+      // Recargar la lista de equipos
+      await loadTeams()
+      
+      // Limpiar el formulario
+      setTeamName('')
+      setTeamDescription('')
+      setTeamColor('#3B82F6')
+      setShowCreateTeam(false)
+      
+      showCustomAlert('Equipo creado exitosamente', 'success')    } catch (err) {
+      showCustomAlert(err instanceof Error ? err.message : 'Error al crear equipo', 'error')
+    }
   }
 
   if (loading && teams.length === 0) {
@@ -235,12 +281,23 @@ function App() {
         <p>Gestión de niños por equipos</p>
       </header>
       
-      <main className="main">
-        {currentView === 'menu' ? (
+      <main className="main">        {currentView === 'menu' ? (
           // VISTA DE MENÚ - Solo selección de equipos
           <div className="menu-view">
             <div className="team-selector">
               <h2>Seleccionar Equipo:</h2>
+              
+              {/* Botón flotante para crear nuevo equipo */}
+              <div className="create-team-section">
+                <button 
+                  onClick={() => setShowCreateTeam(true)}
+                  className="create-team-btn-floating"
+                >
+                  <span className="plus-icon">+</span>
+                  <span className="btn-text">Crear Nuevo Equipo</span>
+                </button>
+              </div>
+              
               <div className="teams-grid">
                 {teams.map((team) => (
                   <button
@@ -263,6 +320,62 @@ function App() {
                   </button>
                 ))}
               </div>
+              
+              {/* Formulario para crear nuevo equipo */}
+              {showCreateTeam && (
+                <div className="create-team-form">
+                  <h3>Crear Nuevo Equipo</h3>
+                  <div className="form-grid">
+                    <input
+                      type="text"
+                      value={teamName}
+                      onChange={(e) => setTeamName(e.target.value)}
+                      placeholder="Nombre del equipo"
+                      className="input-field"
+                      maxLength={50}
+                      autoFocus
+                    />
+                    <input
+                      type="text"
+                      value={teamDescription}
+                      onChange={(e) => setTeamDescription(e.target.value)}
+                      placeholder="Descripción (opcional)"
+                      className="input-field"
+                      maxLength={100}
+                    />
+                    <div className="color-input-group">
+                      <label htmlFor="teamColor">Color:</label>
+                      <input
+                        id="teamColor"
+                        type="color"
+                        value={teamColor}
+                        onChange={(e) => setTeamColor(e.target.value)}
+                        className="color-input"
+                      />
+                    </div>
+                  </div>
+                  <div className="form-actions">
+                    <button 
+                      onClick={createNewTeam}
+                      className="create-btn"
+                      style={{ backgroundColor: teamColor }}
+                    >
+                      Crear Equipo
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setShowCreateTeam(false)
+                        setTeamName('')
+                        setTeamDescription('')
+                        setTeamColor('#3B82F6')
+                      }}
+                      className="cancel-btn"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         ) : (

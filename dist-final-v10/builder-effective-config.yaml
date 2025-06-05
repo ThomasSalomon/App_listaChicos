@@ -1,0 +1,23 @@
+directories:
+  output: dist-final-v10
+  buildResources: build
+appId: com.listadechicos.app
+productName: Lista de Chicos
+files:
+  - filter:
+      - main.js
+      - frontend/dist/**/*
+      - backend/**/*
+      - '!backend/node_modules'
+      - node_modules/**/*
+asarUnpack:
+  - backend/**
+  - node_modules/**
+win:
+  target: dir
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+electronVersion: 36.3.2

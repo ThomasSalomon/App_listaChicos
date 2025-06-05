@@ -2,18 +2,74 @@ const { app, BrowserWindow, Menu } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
 
-// Variables para el servidor de desarrollo y la ventana principal
 let mainWindow;
-let devServer;
+let backendProcess;
+
+function startBackend() {
+  if (app.isPackaged) {
+    const backendPath = path.join(process.resourcesPath, 'app.asar.unpacked', 'backend', 'server.js');
+    
+    // Intentar usar node.exe desde resources, si no existe usar process.execPath con argumentos específicos
+    let nodePath = path.join(process.resourcesPath, 'node.exe');
+    const fs = require('fs');
+    
+    console.log('Intentando iniciar backend...');
+    console.log('Backend path:', backendPath);
+    console.log('Node path:', nodePath);
+      if (!fs.existsSync(nodePath)) {
+      // Si no existe node.exe en resources, usar Electron pero con argumentos específicos para evitar crear ventana
+      console.log('node.exe no encontrado, usando Electron con argumentos específicos');
+      nodePath = process.execPath;
+        // Usar ELECTRON_RUN_AS_NODE para que Electron actúe como Node.js
+      backendProcess = spawn(nodePath, [backendPath], {
+        stdio: ['pipe', 'pipe', 'pipe'], // Capturar stdout/stderr
+        env: { 
+          ...process.env, 
+          NODE_ENV: 'development', // Usar desarrollo para evitar validaciones estrictas
+          IS_ELECTRON_BACKEND: '1',
+          ELECTRON_RUN_AS_NODE: '1' // Esto hace que Electron actúe como Node.js
+        }
+      });
+    } else {
+      // Usar Node.js puro
+      console.log('Usando node.exe desde resources');
+      backendProcess = spawn(nodePath, [backendPath], {
+        stdio: ['pipe', 'pipe', 'pipe'], // Capturar stdout/stderr
+        env: { ...process.env, NODE_ENV: 'development', IS_ELECTRON_BACKEND: '1' }
+      });
+    }
+    
+    // Capturar logs del backend
+    if (backendProcess.stdout) {
+      backendProcess.stdout.on('data', (data) => {
+        console.log('Backend stdout:', data.toString());
+      });
+    }
+    
+    if (backendProcess.stderr) {
+      backendProcess.stderr.on('data', (data) => {
+        console.log('Backend stderr:', data.toString());
+      });
+    }
+    
+    backendProcess.on('error', (err) => {
+      console.error('Error al iniciar backend:', err);
+    });
+    backendProcess.on('exit', (code) => {
+      console.log('Backend finalizó con código:', code);
+    });
+    
+    console.log('Backend process iniciado con PID:', backendProcess.pid);
+  }
+}
 
 function createWindow() {
-  // Crear la ventana del navegador
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     minWidth: 800,
     minHeight: 600,
-    icon: path.join(__dirname, 'frontend/public/idealSportLogo.jpg'), // Ícono de la aplicación
+    icon: path.join(__dirname, 'frontend/public/idealSportLogo.jpg'),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -21,10 +77,10 @@ function createWindow() {
       webSecurity: true
     },
     titleBarStyle: 'default',
-    show: false // No mostrar hasta que esté listo
+    show: false
   });
 
-  // Personalizar el menú
+  // Menú personalizado (puedes ajustar esto a tu gusto)
   const template = [
     {
       label: 'Archivo',
@@ -32,42 +88,16 @@ function createWindow() {
         {
           label: 'Salir',
           accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Ctrl+Q',
-          click: () => {
-            app.quit();
-          }
+          click: () => app.quit()
         }
-      ]
-    },
-    {
-      label: 'Editar',
-      submenu: [
-        { label: 'Deshacer', accelerator: 'CmdOrCtrl+Z', role: 'undo' },
-        { label: 'Rehacer', accelerator: 'Shift+CmdOrCtrl+Z', role: 'redo' },
-        { type: 'separator' },
-        { label: 'Cortar', accelerator: 'CmdOrCtrl+X', role: 'cut' },
-        { label: 'Copiar', accelerator: 'CmdOrCtrl+C', role: 'copy' },
-        { label: 'Pegar', accelerator: 'CmdOrCtrl+V', role: 'paste' }
       ]
     },
     {
       label: 'Ver',
       submenu: [
         { label: 'Recargar', accelerator: 'CmdOrCtrl+R', role: 'reload' },
-        { label: 'Forzar recarga', accelerator: 'CmdOrCtrl+Shift+R', role: 'forceReload' },
         { label: 'Herramientas de desarrollador', accelerator: 'F12', role: 'toggleDevTools' },
-        { type: 'separator' },
-        { label: 'Zoom actual', accelerator: 'CmdOrCtrl+0', role: 'resetZoom' },
-        { label: 'Aumentar zoom', accelerator: 'CmdOrCtrl+Plus', role: 'zoomIn' },
-        { label: 'Disminuir zoom', accelerator: 'CmdOrCtrl+-', role: 'zoomOut' },
-        { type: 'separator' },
         { label: 'Pantalla completa', accelerator: 'F11', role: 'togglefullscreen' }
-      ]
-    },
-    {
-      label: 'Ventana',
-      submenu: [
-        { label: 'Minimizar', accelerator: 'CmdOrCtrl+M', role: 'minimize' },
-        { label: 'Cerrar', accelerator: 'CmdOrCtrl+W', role: 'close' }
       ]
     },
     {
@@ -88,87 +118,56 @@ function createWindow() {
       ]
     }
   ];
-
   const menu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(menu);
 
-  // En desarrollo, iniciar el servidor de Vite
-  if (!app.isPackaged) {
-    startDevServer();
-  }
-
-  // Cargar la aplicación
-  const loadApp = () => {
+  // Cargar la app
+  function loadApp() {
     if (app.isPackaged) {
-      // En producción, cargar desde los archivos construidos
-      mainWindow.loadFile(path.join(__dirname, 'frontend/dist/index.html'));
+      // Cargar el index.html desde el asar
+      const indexPath = path.join(__dirname, 'frontend', 'dist', 'index.html');
+      mainWindow.loadFile(indexPath).catch((error) => {
+        console.error('No se pudo cargar la app:', error);
+        mainWindow.loadURL('data:text/html,<h1>Error: No se pudo cargar la aplicación</h1>');
+      });
     } else {
-      // En desarrollo, cargar desde el servidor de Vite
+      // En desarrollo, cargar desde Vite
       mainWindow.loadURL('http://localhost:5173');
     }
-  };
-
-  // Esperar un poco antes de cargar la app en desarrollo
-  if (!app.isPackaged) {
-    setTimeout(loadApp, 3000); // Esperar 3 segundos para que Vite se inicie
-  } else {
-    loadApp();
   }
 
-  // Mostrar la ventana cuando esté lista
-  mainWindow.once('ready-to-show', () => {
-    mainWindow.show();
-    
-    // En desarrollo, abrir las herramientas de desarrollador
-    if (!app.isPackaged) {
-      mainWindow.webContents.openDevTools();
-    }
-  });
+  if (app.isPackaged) {
+    startBackend();
+  }
+  loadApp();
 
-  // Emitido cuando la ventana se cierra
+  mainWindow.once('ready-to-show', () => mainWindow.show());
   mainWindow.on('closed', () => {
     mainWindow = null;
-    if (devServer) {
-      devServer.kill();
-    }
   });
 }
 
-function startDevServer() {
-  // Iniciar el servidor de desarrollo de Vite
-  devServer = spawn('npm', ['run', 'dev'], {
-    cwd: path.join(__dirname, 'frontend'),
-    shell: true,
-    stdio: 'pipe'
-  });
-
-  devServer.stdout.on('data', (data) => {
-    console.log(`Vite: ${data}`);
-  });
-
-  devServer.stderr.on('data', (data) => {
-    console.error(`Vite Error: ${data}`);
-  });
-}
-
-// Este método será llamado cuando Electron haya terminado la inicialización
 app.whenReady().then(createWindow);
 
-// Salir cuando todas las ventanas estén cerradas
 app.on('window-all-closed', () => {
-  if (devServer) {
-    devServer.kill();
+  if (backendProcess) {
+    backendProcess.kill();
   }
-  
-  // En macOS es común que las aplicaciones y su barra de menú permanezcan activas
   if (process.platform !== 'darwin') {
     app.quit();
   }
 });
 
 app.on('activate', () => {
-  // En macOS es común recrear una ventana cuando se hace clic en el ícono del dock
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });

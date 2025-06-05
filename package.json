@@ -6,8 +6,11 @@
   "homepage": "./",
   "scripts": {
     "start": "electron .",
-    "dev": "electron .",
-    "build": "cd frontend && npm run build",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\" \"npm run dev:electron\"",
+    "dev:backend": "cd backend && node server.js",
+    "dev:electron": "electron .",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build && cd .. && npm install cors express sqlite3 --save && cd backend && npm install --production",
     "dist": "npm run build && electron-builder",
     "dist:win": "npm run build && electron-builder --win",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -16,20 +19,27 @@
     "appId": "com.listadechicos.app",
     "productName": "Lista de Chicos",
     "directories": {
-      "output": "dist"
+      "output": "dist-final-v10"
     },
     "files": [
       "main.js",
       "frontend/dist/**/*",
+      "backend/**/*",
+      "!backend/node_modules",
       "node_modules/**/*"
     ],
+    "asarUnpack": [
+      "backend/**",
+      "node_modules/**"
+    ],
     "win": {
-      "target": "nsis",
-      "icon": "frontend/public/vite.svg"
+      "target": "dir"
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
     }
   },
   "repository": {
@@ -47,10 +57,18 @@
     "niños"
   ],
   "author": "Tommy Salomon",
-  "license": "MIT",  "bugs": {
+  "license": "MIT",
+  "bugs": {
     "url": "https://github.com/ThomasSalomon/Aplicacion_listaChicos/issues"
   },
+  "dependencies": {
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "sqlite3": "^5.1.7"
+  },
   "devDependencies": {
+    "concurrently": "^9.1.2",
     "electron": "^36.3.2",
     "electron-builder": "^26.0.12"
   }
