@@ -25,7 +25,6 @@ Una aplicación de escritorio moderna para gestionar listas de niños, construid
 - 💻 Aplicación de escritorio nativa
 - ⚡ Rendimiento rápido con Vite
 - 🇪🇸 Menú en español
-- 🚪 **Botón de Salir**: Opción segura para cerrar la aplicación desde el menú principal con confirmación
 
 ## 🛠️ Tecnologías
 
@@ -235,11 +234,6 @@ CREATE TABLE children (
 1. **Agregar un niño**: Escribe el nombre y la edad, luego presiona "Agregar"
 2. **Eliminar un niño**: Haz clic en el botón ❌ junto al nombre
 3. **Ver estadísticas**: El contador se actualiza automáticamente
-
-### Cerrar la Aplicación
-1. **Botón de Salir**: Ubicado en la parte inferior del menú principal
-2. **Confirmación Segura**: Al hacer clic aparece un diálogo de confirmación
-3. **Cierre Automático**: Confirma para cerrar la aplicación de forma segura
 
 ## 🔄 Historial de Versiones
 

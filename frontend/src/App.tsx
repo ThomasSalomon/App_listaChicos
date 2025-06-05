@@ -198,7 +198,6 @@ function App() {
       addChild()
     }
   }
-
   const selectTeamAndNavigate = (team: Team) => {
     setSelectedTeam(team)
     setCurrentView('team-management')
@@ -208,6 +207,19 @@ function App() {
     setCurrentView('menu')
     setSelectedTeam(null)
     setShowAddChild(false)
+  }
+
+  // Función para cerrar la aplicación
+  const handleExitApp = () => {
+    showCustomConfirm('¿Estás seguro de que quieres salir de la aplicación?', () => {
+      // En Electron, podemos cerrar la ventana principal
+      if ((window as any).electronAPI) {
+        (window as any).electronAPI.closeApp()
+      } else {
+        // Para desarrollo web, cerrar la pestaña/ventana
+        window.close()
+      }
+    })
   }
 
   const createNewTeam = async () => {
@@ -374,8 +386,17 @@ function App() {
                       Cancelar
                     </button>
                   </div>
-                </div>
-              )}
+                </div>              )}
+            </div>
+            
+            {/* Botón de salir en la parte inferior */}
+            <div className="exit-section">
+              <button 
+                onClick={handleExitApp}
+                className="exit-btn"
+              >
+                🚪 Salir de la Aplicación
+              </button>
             </div>
           </div>
         ) : (
