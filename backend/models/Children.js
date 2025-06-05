@@ -1,6 +1,8 @@
 const database = require('../config/database');
+const { calculateAge, formatBirthDateForDB } = require('../utils/helpers');
 
-class ChildrenModel {  // Obtener todos los niños
+class ChildrenModel {
+  // Obtener todos los niños
   static getAll() {
     return new Promise((resolve, reject) => {
       const sql = `
@@ -14,7 +16,12 @@ class ChildrenModel {  // Obtener todos los niños
         if (err) {
           reject(err);
         } else {
-          resolve(rows);
+          // Calcular edad para cada niño
+          const childrenWithAge = rows.map(child => ({
+            ...child,
+            edad: calculateAge(child.fecha_nacimiento)
+          }));
+          resolve(childrenWithAge);
         }
       });
     });
@@ -35,11 +42,17 @@ class ChildrenModel {  // Obtener todos los niños
         if (err) {
           reject(err);
         } else {
-          resolve(rows);
+          // Calcular edad para cada niño
+          const childrenWithAge = rows.map(child => ({
+            ...child,
+            edad: calculateAge(child.fecha_nacimiento)
+          }));
+          resolve(childrenWithAge);
         }
       });
     });
   }
+
   // Obtener un niño por ID
   static getById(id) {
     return new Promise((resolve, reject) => {
@@ -54,53 +67,65 @@ class ChildrenModel {  // Obtener todos los niños
         if (err) {
           reject(err);
         } else {
+          if (row) {
+            // Calcular edad
+            row.edad = calculateAge(row.fecha_nacimiento);
+          }
           resolve(row);
         }
       });
     });
   }
+
   // Crear un nuevo niño
   static create(childData) {
     return new Promise((resolve, reject) => {
-      const { nombre, apellido, edad, team_id } = childData;
-      const sql = 'INSERT INTO children (nombre, apellido, edad, team_id) VALUES (?, ?, ?, ?)';
+      const { nombre, apellido, fecha_nacimiento, team_id } = childData;
+      const formattedDate = formatBirthDateForDB(fecha_nacimiento);
+      const sql = 'INSERT INTO children (nombre, apellido, fecha_nacimiento, team_id) VALUES (?, ?, ?, ?)';
       
-      database.getDB().run(sql, [nombre.trim(), apellido.trim(), edad, team_id || 1], function(err) {
+      database.getDB().run(sql, [nombre.trim(), apellido.trim(), formattedDate, team_id || 1], function(err) {
         if (err) {
           reject(err);
         } else {
-          resolve({
+          const newChild = {
             id: this.lastID,
             nombre: nombre.trim(),
             apellido: apellido.trim(),
-            edad: edad,
+            fecha_nacimiento: formattedDate,
+            edad: calculateAge(formattedDate),
             team_id: team_id || 1,
             created_at: new Date().toISOString()
-          });
+          };
+          resolve(newChild);
         }
       });
     });
   }
+
   // Actualizar un niño
   static update(id, childData) {
     return new Promise((resolve, reject) => {
-      const { nombre, apellido, edad, team_id } = childData;
-      const sql = 'UPDATE children SET nombre = ?, apellido = ?, edad = ?, team_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?';
+      const { nombre, apellido, fecha_nacimiento, team_id } = childData;
+      const formattedDate = formatBirthDateForDB(fecha_nacimiento);
+      const sql = 'UPDATE children SET nombre = ?, apellido = ?, fecha_nacimiento = ?, team_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?';
       
-      database.getDB().run(sql, [nombre.trim(), apellido.trim(), edad, team_id || 1, id], function(err) {
+      database.getDB().run(sql, [nombre.trim(), apellido.trim(), formattedDate, team_id || 1, id], function(err) {
         if (err) {
           reject(err);
         } else if (this.changes === 0) {
           resolve(null); // No se encontró el registro
         } else {
-          resolve({
+          const updatedChild = {
             id: parseInt(id),
             nombre: nombre.trim(),
             apellido: apellido.trim(),
-            edad: edad,
+            fecha_nacimiento: formattedDate,
+            edad: calculateAge(formattedDate),
             team_id: team_id || 1,
             updated_at: new Date().toISOString()
-          });
+          };
+          resolve(updatedChild);
         }
       });
     });
@@ -136,28 +161,42 @@ class ChildrenModel {  // Obtener todos los niños
     });
   }
 
-  // Obtener estadísticas
+  // Obtener estadísticas (necesita actualización para calcular edades dinámicamente)
   static getStats() {
     return new Promise((resolve, reject) => {
       const sql = `
         SELECT 
           COUNT(*) as total,
-          AVG(edad) as edadPromedio,
-          MIN(edad) as edadMinima,
-          MAX(edad) as edadMaxima
+          fecha_nacimiento
         FROM children
       `;
       
-      database.getDB().get(sql, [], (err, row) => {
+      database.getDB().all(sql, [], (err, rows) => {
         if (err) {
           reject(err);
         } else {
-          resolve({
-            total: row.total,
-            edadPromedio: Math.round(row.edadPromedio * 100) / 100,
-            edadMinima: row.edadMinima,
-            edadMaxima: row.edadMaxima
-          });
+          if (rows.length === 0) {
+            resolve({
+              total: 0,
+              edadPromedio: 0,
+              edadMinima: 0,
+              edadMaxima: 0
+            });
+          } else {
+            // Calcular edades
+            const edades = rows.map(row => calculateAge(row.fecha_nacimiento));
+            const total = edades.length;
+            const edadPromedio = edades.reduce((sum, edad) => sum + edad, 0) / total;
+            const edadMinima = Math.min(...edades);
+            const edadMaxima = Math.max(...edades);
+            
+            resolve({
+              total,
+              edadPromedio: Math.round(edadPromedio * 100) / 100,
+              edadMinima,
+              edadMaxima
+            });
+          }
         }
       });
     });

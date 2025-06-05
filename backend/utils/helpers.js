@@ -41,6 +41,50 @@ const formatDate = (date, includeTime = false) => {
 };
 
 /**
+ * Calcula la edad basada en la fecha de nacimiento
+ */
+const calculateAge = (birthDate) => {
+  const today = new Date();
+  const birth = new Date(birthDate);
+  
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  
+  return age;
+};
+
+/**
+ * Valida si una fecha de nacimiento es válida para niños
+ */
+const isValidBirthDate = (birthDate) => {
+  const birth = new Date(birthDate);
+  const today = new Date();
+  
+  // Verificar que la fecha no sea futura
+  if (birth > today) {
+    return false;
+  }
+  
+  // Calcular edad
+  const age = calculateAge(birthDate);
+  
+  // Verificar que la edad esté en rango válido (0-25 años para ser flexible)
+  return age >= 0 && age <= 25;
+};
+
+/**
+ * Convierte fecha de nacimiento a formato ISO (YYYY-MM-DD)
+ */
+const formatBirthDateForDB = (birthDate) => {
+  const date = new Date(birthDate);
+  return date.toISOString().split('T')[0];
+};
+
+/**
  * Valida si una edad es válida para niños
  */
 const isValidChildAge = (age) => {
@@ -164,6 +208,9 @@ module.exports = {
   generateUUID,
   formatNumber,
   formatDate,
+  calculateAge,
+  isValidBirthDate,
+  formatBirthDateForDB,
   isValidChildAge,
   capitalizeWords,
   sanitizeString,

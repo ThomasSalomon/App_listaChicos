@@ -12,11 +12,18 @@ Una aplicación de escritorio moderna para gestionar listas de niños, construid
 - 📱 **Responsive**: Optimizado para dispositivos móviles
 
 ### 👶 Gestión de Niños
-- ✅ Agregar niños a la lista con nombre y edad
+- ✅ **Registro con Fecha de Nacimiento**: Sistema moderno que registra la fecha de nacimiento en lugar de edad manual
+- 🎂 **Cálculo Automático de Edad**: La edad se calcula automáticamente basada en la fecha de nacimiento
+- 📅 **Actualización de Cumpleaños**: La edad se actualiza automáticamente cuando es el cumpleaños del niño
+- 📝 **Validación Inteligente**: 
+  - Fechas futuras no permitidas
+  - Validación de edad entre 0-25 años
+  - Formato de fecha intuitivo (DD/MM/AAAA)
 - ❌ Eliminar niños de la lista individualmente  
 - 🗑️ Limpiar toda la lista con confirmación
 - 💾 Persistencia de datos con base de datos SQLite
 - 📊 Contador total de niños
+- 👁️ **Visualización Completa**: Muestra nombre, edad actual y fecha de nacimiento
 
 ### 🎨 Interfaz y Experiencia
 - 🌈 Interfaz moderna con efectos glassmorphism
@@ -188,9 +195,11 @@ Lista-de-Chicos/
 - `POST /api/teams` - Crear nuevo equipo (con validación)
 - `PUT /api/teams/:id` - Actualizar equipo existente
 - `DELETE /api/teams/:id` - Eliminar equipo
-- `GET /api/children` - Obtener todos los niños
-- `POST /api/children` - Agregar nuevo niño
+- `GET /api/children` - Obtener todos los niños (con edad calculada)
+- `POST /api/children` - Agregar nuevo niño (requiere fecha_nacimiento)
+- `PUT /api/children/:id` - Actualizar niño existente
 - `DELETE /api/children/:id` - Eliminar niño
+- `GET /api/teams/:id/children` - Obtener niños de un equipo específico
 
 ### Base de Datos SQLite
 ```sql
@@ -206,12 +215,17 @@ CREATE TABLE teams (
 -- Tabla de niños
 CREATE TABLE children (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    age INTEGER,
+    nombre TEXT NOT NULL,
+    apellido TEXT NOT NULL,
+    fecha_nacimiento DATE NOT NULL,
     team_id INTEGER,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (team_id) REFERENCES teams(id)
 );
+
+-- Nota: La edad se calcula dinámicamente usando la fecha_nacimiento
+-- Funciones auxiliares de cálculo de edad disponibles en backend/utils/helpers.js
 ```
 
 ### Personalización
@@ -232,9 +246,16 @@ CREATE TABLE children (
    - Presiona "Crear Equipo" para guardar
 
 ### Gestión de Niños
-1. **Agregar un niño**: Escribe el nombre y la edad, luego presiona "Agregar"
-2. **Eliminar un niño**: Haz clic en el botón ❌ junto al nombre
-3. **Ver estadísticas**: El contador se actualiza automáticamente
+1. **Agregar un niño**: 
+   - Completa el formulario con:
+     - **Nombre**: Obligatorio (2-50 caracteres)
+     - **Apellido**: Obligatorio (2-50 caracteres)
+     - **Fecha de Nacimiento**: Selecciona usando el calendario (no se permiten fechas futuras)
+   - La edad se calcula automáticamente
+   - Presiona "Agregar" para guardar
+2. **Ver información**: Cada niño muestra nombre completo, edad actual y fecha de nacimiento
+3. **Eliminar un niño**: Haz clic en el botón ❌ junto al nombre con confirmación de seguridad
+4. **Actualización automática**: Las edades se actualizan automáticamente en tiempo real
 
 ### Cerrar la Aplicación
 1. **Botón de Salir**: Ubicado en la parte inferior del menú principal
@@ -242,6 +263,34 @@ CREATE TABLE children (
 3. **Cierre Automático**: Confirma para cerrar la aplicación de forma segura
 
 ## 🔄 Historial de Versiones
+
+### v3.0 (Junio 2025) - "Sistema de Fecha de Nacimiento"
+**🎯 Mejora Principal**: Reemplazo completo del sistema de edad manual por fechas de nacimiento
+
+**🔧 Cambios Principales**:
+- ✅ **Nueva Base de Datos**: Campo `fecha_nacimiento` reemplaza `edad`
+- ✅ **Cálculo Automático**: Edad calculada dinámicamente en tiempo real
+- ✅ **Interfaz Modernizada**: Input de tipo `date` con validaciones
+- ✅ **Migración Automática**: Conversión de datos existentes preservando información
+- ✅ **Validación Inteligente**: Fechas futuras bloqueadas, rangos de edad controlados
+- ✅ **Funciones Auxiliares**: 
+  - `calculateAge()` - Cálculo preciso de edad
+  - `isValidBirthDate()` - Validación de fechas
+  - `formatBirthDateForDB()` - Formateo para base de datos
+
+**🚀 Funcionalidades Nuevas**:
+- 📅 Selección de fecha con calendario nativo
+- 🎂 Actualización automática de edad en cumpleaños
+- 👁️ Visualización de fecha de nacimiento y edad calculada
+- 🔄 Migración automática de datos existentes
+
+**🛠️ Cambios Técnicos**:
+- `backend/models/Children.js` - Reescrito completamente
+- `backend/controllers/childrenController.js` - Actualizado para fecha de nacimiento
+- `backend/middleware/validation.js` - Nueva validación de fechas
+- `backend/utils/helpers.js` - Funciones de cálculo de edad
+- `frontend/src/App.tsx` - Interfaz actualizada con inputs de fecha
+- `backend/config/database.js` - Migración automática de esquema
 
 ### v2.0 (Junio 2025) - "Eliminación de Equipo Automático"
 **🎯 Problema Resuelto**: Ya no se crea automáticamente "Equipo Principal"
@@ -283,13 +332,20 @@ npm install -g electron-builder
 npm run dist:installer
 ```
 
-#### Error: "Backend no inicia"
+#### Error: "Fechas de nacimiento no se guardan correctamente"
 ```bash
-# Verificar dependencias del backend
+# Verificar migración de base de datos
 cd backend
-npm install
-cd ..
-npm run dev:backend
+node debug-db.js  # Ver estructura actual
+# La migración se ejecuta automáticamente al iniciar
+```
+
+#### Error: "Edad no se calcula correctamente"
+```bash
+# Verificar funciones auxiliares
+cd backend/utils
+# Revisar helpers.js para cálculo de edad
+# La edad se calcula en tiempo real desde fecha_nacimiento
 ```
 
 ### Problemas del Usuario Final
@@ -299,10 +355,20 @@ npm run dev:backend
 - ✅ Ejecutar como administrador
 - ✅ Verificar antivirus no bloquee el ejecutable
 
-#### "Se crean equipos duplicados"
-- ✅ Verificar versión v2.0 o superior
-- ✅ Eliminar base de datos antigua: `backend/database/children.sqlite`
-- ✅ Reiniciar aplicación
+#### "Formulario no acepta fechas de nacimiento"
+- ✅ Verificar versión v3.0 o superior
+- ✅ Comprobar que el campo de fecha esté habilitado
+- ✅ Verificar que la fecha no sea futura
+
+#### "Edad no se actualiza automáticamente"
+- ✅ Verificar conexión con backend
+- ✅ Recargar la aplicación
+- ✅ Verificar que la fecha de nacimiento sea correcta
+
+#### "Error al migrar datos antiguos"
+- ✅ Respaldar base de datos: `backend/database/children.sqlite`
+- ✅ Eliminar base de datos antigua para recrear esquema
+- ✅ Reiniciar aplicación para migración automática
 
 ## 🤝 Contribuir
 

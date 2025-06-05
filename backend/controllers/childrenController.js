@@ -57,25 +57,33 @@ class ChildrenController {
   }
   /**
    * Crear un nuevo niño
-   */
-  static async createChild(req, res) {
+   */  static async createChild(req, res) {
     try {
-      const { nombre, apellido, edad, team_id } = req.body;
+      const { nombre, apellido, fecha_nacimiento, team_id } = req.body;
       
       // Validaciones básicas
-      if (!nombre || !apellido || edad === undefined || edad === null) {
+      if (!nombre || !apellido || !fecha_nacimiento) {
         return res.status(400).json({ 
           error: 'Campos requeridos faltantes',
-          message: 'Los campos nombre, apellido y edad son obligatorios'
+          message: 'Los campos nombre, apellido y fecha de nacimiento son obligatorios'
         });
       }
 
-      // Validar edad
-      const edadNum = parseInt(edad);
-      if (isNaN(edadNum) || edadNum < 1 || edadNum > 18) {
+      // Validar fecha de nacimiento
+      const birthDate = new Date(fecha_nacimiento);
+      if (isNaN(birthDate.getTime())) {
         return res.status(400).json({ 
-          error: 'Edad inválida',
-          message: 'La edad debe ser un número entre 1 y 18 años'
+          error: 'Fecha de nacimiento inválida',
+          message: 'La fecha de nacimiento debe ser una fecha válida'
+        });
+      }
+
+      // Validar que no sea fecha futura
+      const today = new Date();
+      if (birthDate > today) {
+        return res.status(400).json({ 
+          error: 'Fecha de nacimiento inválida',
+          message: 'La fecha de nacimiento no puede ser futura'
         });
       }
 
@@ -85,7 +93,7 @@ class ChildrenController {
           error: 'Nombres inválidos',
           message: 'El nombre y apellido no pueden estar vacíos'
         });
-      }      // Validar team_id - debe ser proporcionado
+      }// Validar team_id - debe ser proporcionado
       if (!team_id) {
         return res.status(400).json({ 
           error: 'Team ID requerido',
@@ -99,12 +107,10 @@ class ChildrenController {
           error: 'Team ID inválido',
           message: 'El team_id debe ser un número válido mayor a 0'
         });
-      }
-
-      const childData = {
+      }      const childData = {
         nombre: nombre.trim(),
         apellido: apellido.trim(),
-        edad: edadNum,
+        fecha_nacimiento: fecha_nacimiento,
         team_id: teamId
       };
 
@@ -125,11 +131,10 @@ class ChildrenController {
 
   /**
    * Actualizar un niño existente
-   */
-  static async updateChild(req, res) {
+   */  static async updateChild(req, res) {
     try {
       const { id } = req.params;
-      const { nombre, apellido, edad } = req.body;
+      const { nombre, apellido, fecha_nacimiento } = req.body;
       
       // Validar ID
       if (!id || isNaN(parseInt(id))) {
@@ -140,19 +145,28 @@ class ChildrenController {
       }
 
       // Validaciones básicas
-      if (!nombre || !apellido || edad === undefined || edad === null) {
+      if (!nombre || !apellido || !fecha_nacimiento) {
         return res.status(400).json({ 
           error: 'Campos requeridos faltantes',
-          message: 'Los campos nombre, apellido y edad son obligatorios'
+          message: 'Los campos nombre, apellido y fecha de nacimiento son obligatorios'
         });
       }
 
-      // Validar edad
-      const edadNum = parseInt(edad);
-      if (isNaN(edadNum) || edadNum < 1 || edadNum > 18) {
+      // Validar fecha de nacimiento
+      const birthDate = new Date(fecha_nacimiento);
+      if (isNaN(birthDate.getTime())) {
         return res.status(400).json({ 
-          error: 'Edad inválida',
-          message: 'La edad debe ser un número entre 1 y 18 años'
+          error: 'Fecha de nacimiento inválida',
+          message: 'La fecha de nacimiento debe ser una fecha válida'
+        });
+      }
+
+      // Validar que no sea fecha futura
+      const today = new Date();
+      if (birthDate > today) {
+        return res.status(400).json({ 
+          error: 'Fecha de nacimiento inválida',
+          message: 'La fecha de nacimiento no puede ser futura'
         });
       }
 
@@ -167,7 +181,7 @@ class ChildrenController {
       const childData = {
         nombre: nombre.trim(),
         apellido: apellido.trim(),
-        edad: edadNum
+        fecha_nacimiento: fecha_nacimiento
       };
 
       const updatedChild = await ChildrenModel.update(parseInt(id), childData);

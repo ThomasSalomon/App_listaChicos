@@ -15,7 +15,8 @@ interface Child {
   id: number
   nombre: string
   apellido: string
-  edad: number
+  fecha_nacimiento: string
+  edad?: number // Calculada dinámicamente
   team_id: number
   team_nombre?: string
   team_color?: string
@@ -32,11 +33,10 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentView, setCurrentView] = useState<'menu' | 'team-management'>('menu')
-  
-  // Estados para el formulario
+    // Estados para el formulario
   const [nombre, setNombre] = useState('')
   const [apellido, setApellido] = useState('')
-  const [edad, setEdad] = useState('')
+  const [fechaNacimiento, setFechaNacimiento] = useState('')
   const [showAddChild, setShowAddChild] = useState(false)
   // Estados para modales personalizados
   const [showAlert, setShowAlert] = useState(false)
@@ -116,56 +116,82 @@ function App() {
         throw new Error('Error al cargar niños')
       }
       const childrenData = await response.json()
-      setChildren(childrenData)
-    } catch (err) {
+      setChildren(childrenData)    } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar niños')
     } finally {
       setLoading(false)
     }
   }
-
+  
   const addChild = async () => {
     if (!selectedTeam) {
       showCustomAlert('Selecciona un equipo primero', 'warning')
       return
     }
 
-    if (nombre.trim() && apellido.trim() && edad.trim()) {
-      const edadNum = parseInt(edad)
-      if (edadNum > 0 && edadNum <= 18) {
-        try {
-          const response = await fetch(`${API_BASE_URL}/children`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              nombre: nombre.trim(),
-              apellido: apellido.trim(),
-              edad: edadNum,
-              team_id: selectedTeam.id
-            })
+    // Debug: verificar valores
+    console.log('Valores del formulario:', { nombre, apellido, fechaNacimiento })
+    console.log('Valores después de trim:', { 
+      nombre: nombre.trim(), 
+      apellido: apellido.trim(), 
+      fechaNacimiento: fechaNacimiento.trim() 
+    })
+
+    if (nombre.trim() && apellido.trim() && fechaNacimiento.trim()) {
+      // Validar que la fecha de nacimiento sea válida
+      const birthDate = new Date(fechaNacimiento)
+      const today = new Date()
+      
+      if (isNaN(birthDate.getTime())) {
+        showCustomAlert('Por favor ingresa una fecha de nacimiento válida', 'warning')
+        return
+      }
+      
+      if (birthDate > today) {
+        showCustomAlert('La fecha de nacimiento no puede ser futura', 'warning')
+        return
+      }
+      
+      // Calcular edad para validación
+      const age = today.getFullYear() - birthDate.getFullYear()
+      const monthDiff = today.getMonth() - birthDate.getMonth()
+      const actualAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate()) ? age - 1 : age
+      
+      if (actualAge < 0 || actualAge > 25) {
+        showCustomAlert('La edad calculada debe estar entre 0 y 25 años', 'warning')
+        return
+      }
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/children`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            nombre: nombre.trim(),
+            apellido: apellido.trim(),
+            fecha_nacimiento: fechaNacimiento,
+            team_id: selectedTeam.id
           })
+        })
 
-          if (!response.ok) {
-            const errorData = await response.json()
-            throw new Error(errorData.message || 'Error al agregar niño')
-          }
-
-          // Recargar la lista de niños
-          await loadChildren(selectedTeam.id)
-          
-          // Limpiar formulario
-          setNombre('')
-          setApellido('')
-          setEdad('')
-          setShowAddChild(false)
-          showCustomAlert('Niño agregado exitosamente', 'success')
-        } catch (err) {
-          showCustomAlert(err instanceof Error ? err.message : 'Error al agregar niño', 'error')
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.message || 'Error al agregar niño')
         }
-      } else {
-        showCustomAlert('Por favor ingresa una edad válida (1-18 años)', 'warning')
+
+        // Recargar la lista de niños
+        await loadChildren(selectedTeam.id)
+        
+        // Limpiar formulario
+        setNombre('')
+        setApellido('')
+        setFechaNacimiento('')
+        setShowAddChild(false)
+        showCustomAlert('Niño agregado exitosamente', 'success')
+      } catch (err) {
+        showCustomAlert(err instanceof Error ? err.message : 'Error al agregar niño', 'error')
       }
     } else {
       showCustomAlert('Por favor completa todos los campos', 'warning')
@@ -450,16 +476,14 @@ function App() {
                         placeholder="Apellido"
                         className="input-field"
                         maxLength={50}
-                      />
-                      <input
-                        type="number"
-                        value={edad}
-                        onChange={(e) => setEdad(e.target.value)}
+                      />                      <input
+                        type="date"
+                        value={fechaNacimiento}
+                        onChange={(e) => setFechaNacimiento(e.target.value)}
                         onKeyPress={handleKeyPress}
-                        placeholder="Edad"
-                        min="1"
-                        max="18"
-                        className="input-field input-age"
+                        placeholder="Fecha de nacimiento"
+                        className="input-field input-date"
+                        max={new Date().toISOString().split('T')[0]} // No permitir fechas futuras
                       />
                       <button 
                         onClick={addChild} 
@@ -494,12 +518,16 @@ function App() {
                       </div>
                       <ul className="children-list">
                         {children.map((child) => (
-                          <li key={child.id} className="child-item">
-                            <div className="child-info">
+                          <li key={child.id} className="child-item">                            <div className="child-info">
                               <span className="child-name">
                                 {child.nombre} {child.apellido}
                               </span>
-                              <span className="child-age">{child.edad} años</span>
+                              <span className="child-age">
+                                {child.edad !== undefined ? `${child.edad} años` : 'Edad no disponible'}
+                              </span>
+                              <span className="child-birth-date">
+                                Nació: {new Date(child.fecha_nacimiento).toLocaleDateString('es-ES')}
+                              </span>
                             </div>
                             <button 
                               onClick={() => removeChild(child.id)}

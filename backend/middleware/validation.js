@@ -3,11 +3,13 @@
  * Middleware para validar datos de entrada
  */
 
+const { isValidBirthDate, calculateAge } = require('../utils/helpers');
+
 /**
  * Valida los datos de un niño
  */
 const validateChild = (req, res, next) => {
-  const { nombre, apellido, edad, team_id } = req.body;
+  const { nombre, apellido, fecha_nacimiento, team_id } = req.body;
   const errors = [];
 
   // Validar nombre
@@ -36,17 +38,24 @@ const validateChild = (req, res, next) => {
     errors.push('El apellido no puede tener más de 50 caracteres');
   }
 
-  // Validar edad
-  if (edad === undefined || edad === null) {
-    errors.push('La edad es requerida');
+  // Validar fecha de nacimiento
+  if (!fecha_nacimiento) {
+    errors.push('La fecha de nacimiento es requerida');
+  } else if (typeof fecha_nacimiento !== 'string') {
+    errors.push('La fecha de nacimiento debe ser una cadena de texto válida');
   } else {
-    const edadNum = parseInt(edad);
-    if (isNaN(edadNum)) {
-      errors.push('La edad debe ser un número válido');
-    } else if (edadNum < 1) {
-      errors.push('La edad debe ser mayor a 0');
-    } else if (edadNum > 18) {
-      errors.push('La edad debe ser menor o igual a 18');
+    const fecha = new Date(fecha_nacimiento);
+    if (isNaN(fecha.getTime())) {
+      errors.push('La fecha de nacimiento debe ser una fecha válida');
+    } else if (!isValidBirthDate(fecha_nacimiento)) {
+      const edad = calculateAge(fecha_nacimiento);
+      if (fecha > new Date()) {
+        errors.push('La fecha de nacimiento no puede ser futura');
+      } else if (edad > 25) {
+        errors.push('La edad calculada debe ser menor o igual a 25 años');
+      } else if (edad < 0) {
+        errors.push('La fecha de nacimiento debe ser válida');
+      }
     }
   }
 
@@ -68,11 +77,10 @@ const validateChild = (req, res, next) => {
       details: errors
     });
   }
-
   // Sanitizar datos
   req.body.nombre = nombre.trim();
   req.body.apellido = apellido.trim();
-  req.body.edad = parseInt(edad);
+  // fecha_nacimiento se mantiene como string para la base de datos
 
   next();
 };
@@ -132,10 +140,9 @@ const validateQuery = (req, res, next) => {
     }
     req.query.offset = offsetNum;
   }
-
   // Validar sort
   if (sort !== undefined) {
-    const validSortFields = ['id', 'nombre', 'apellido', 'edad', 'created_at', 'updated_at'];
+    const validSortFields = ['id', 'nombre', 'apellido', 'fecha_nacimiento', 'created_at', 'updated_at'];
     if (!validSortFields.includes(sort)) {
       return res.status(400).json({
         error: 'Campo de ordenamiento inválido',

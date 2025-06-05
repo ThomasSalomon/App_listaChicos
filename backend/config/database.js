@@ -50,18 +50,21 @@ class Database {
         if (!row) {
           // La tabla no existe, crearla desde cero
           console.log('🔧 Creando tablas desde cero...');
-          this.createTablesFromScratch(resolve, reject);
-        } else {
-          // La tabla existe, verificar si tiene team_id
+          this.createTablesFromScratch(resolve, reject);        } else {
+          // La tabla existe, verificar estructura
           this.db.all("PRAGMA table_info(children)", (err, columns) => {
             if (err) {
               reject(err);
               return;
             }
-              const hasTeamId = columns.some(col => col.name === 'team_id');
-            if (!hasTeamId) {
-              // Migrar tabla existente
-              this.migrateExistingTable(resolve, reject);
+            
+            const hasTeamId = columns.some(col => col.name === 'team_id');
+            const hasFechaNacimiento = columns.some(col => col.name === 'fecha_nacimiento');
+            const hasEdad = columns.some(col => col.name === 'edad');
+            
+            if (!hasTeamId || (hasEdad && !hasFechaNacimiento)) {
+              // Necesita migración
+              this.migrateExistingTable(resolve, reject, { hasTeamId, hasFechaNacimiento, hasEdad });
             } else {
               // La tabla ya está actualizada
               resolve();
@@ -71,15 +74,56 @@ class Database {
       });
     });
   }
-
-  // Migrar tabla existente agregando team_id
-  async migrateExistingTable(resolve, reject) {
+  // Migrar tabla existente
+  async migrateExistingTable(resolve, reject, flags = {}) {
     console.log('🔄 Migrando tabla children existente...');
-      // Como la tabla está vacía, simplemente agregamos la columna team_id
-    const migrateSteps = [
-      // 1. Agregar columna team_id
-      `ALTER TABLE children ADD COLUMN team_id INTEGER`
-    ];
+    
+    const { hasTeamId, hasFechaNacimiento, hasEdad } = flags;
+    const migrateSteps = [];
+    
+    // Agregar columna team_id si no existe
+    if (!hasTeamId) {
+      migrateSteps.push(`ALTER TABLE children ADD COLUMN team_id INTEGER`);
+    }
+    
+    // Migrar de edad a fecha_nacimiento si es necesario
+    if (hasEdad && !hasFechaNacimiento) {
+      // Primero agregar la nueva columna
+      migrateSteps.push(`ALTER TABLE children ADD COLUMN fecha_nacimiento DATE`);
+      
+      // Calcular fecha de nacimiento aproximada basada en edad actual
+      // Asumiendo que la edad era correcta al momento de creación
+      migrateSteps.push(`
+        UPDATE children 
+        SET fecha_nacimiento = date('now', '-' || edad || ' years')
+        WHERE fecha_nacimiento IS NULL
+      `);
+      
+      // Crear nueva tabla temporal con la estructura correcta
+      migrateSteps.push(`
+        CREATE TABLE children_new (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          nombre TEXT NOT NULL,
+          apellido TEXT NOT NULL,
+          fecha_nacimiento DATE NOT NULL,
+          team_id INTEGER,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (team_id) REFERENCES teams (id) ON DELETE CASCADE
+        )
+      `);
+      
+      // Copiar datos a la nueva tabla
+      migrateSteps.push(`
+        INSERT INTO children_new (id, nombre, apellido, fecha_nacimiento, team_id, created_at, updated_at)
+        SELECT id, nombre, apellido, fecha_nacimiento, team_id, created_at, updated_at
+        FROM children
+      `);
+      
+      // Reemplazar tabla antigua con nueva
+      migrateSteps.push(`DROP TABLE children`);
+      migrateSteps.push(`ALTER TABLE children_new RENAME TO children`);
+    }
 
     let currentStep = 0;
     
@@ -124,7 +168,7 @@ class Database {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nombre TEXT NOT NULL,
         apellido TEXT NOT NULL,
-        edad INTEGER NOT NULL CHECK(edad >= 1 AND edad <= 18),
+        fecha_nacimiento DATE NOT NULL,
         team_id INTEGER,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
