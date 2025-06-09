@@ -12,6 +12,39 @@ Una aplicación de escritorio moderna para gestionar listas de niños, construid
 - 📱 **Responsive**: Optimizado para dispositivos móviles
 
 ### 👶 Gestión de Niños
+
+---
+
+## 🌐 Uso en Móvil/Web
+
+La aplicación puede usarse perfectamente desde el navegador de un teléfono móvil si la subes a una página web pública. Para una experiencia óptima en móviles, sigue estos pasos:
+
+### 1. CSS Responsive
+Agrega al final de tu archivo `frontend/src/App.css` los estilos recomendados para móviles (ver ejemplo en la respuesta anterior). Esto hará que los formularios, botones y listas sean cómodos para usar con el dedo.
+
+### 2. Meta Tags para Móvil
+Asegúrate de que tu `frontend/index.html` incluya:
+```html
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#3B82F6">
+```
+
+### 3. Backend en la Nube
+Para que funcione desde cualquier lugar, sube tu backend a Railway, Heroku, Vercel, etc. Cambia la variable `API_BASE_URL` en el frontend para que apunte a la URL pública de tu backend.
+
+### 4. Hosting del Frontend
+Puedes subir el frontend a Netlify, Vercel, GitHub Pages, etc. Solo necesitas subir la carpeta `dist` generada por `npm run build`.
+
+### 5. Resultado
+- La app será 100% funcional desde el navegador móvil
+- Se verá y sentirá como una app nativa
+- Puedes agregarla a la pantalla de inicio como PWA
+
+---
+
 - ✅ **Registro con Fecha de Nacimiento**: Sistema moderno que registra la fecha de nacimiento en lugar de edad manual
 - 🎂 **Cálculo Automático de Edad**: La edad se calcula automáticamente basada en la fecha de nacimiento
 - 📅 **Actualización de Cumpleaños**: La edad se actualiza automáticamente cuando es el cumpleaños del niño

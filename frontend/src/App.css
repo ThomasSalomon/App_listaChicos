@@ -1642,3 +1642,180 @@
   transform: translateY(0);
   box-shadow: 0 2px 10px rgba(220, 53, 69, 0.3);
 }
+
+/* ========== ESTILOS PARA MÓVIL ========== */
+@media (max-width: 768px) {
+  /* Aplicación general */
+  .app {
+    padding: 0.5rem;
+    font-size: 16px; /* Evita zoom automático en iOS */
+  }
+
+  /* Header más compacto */
+  .header {
+    padding: 1rem 0.5rem;
+    text-align: center;
+  }
+
+  .header h1 {
+    font-size: 1.5rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .header p {
+    font-size: 0.9rem;
+  }
+
+  /* Grilla de equipos - una columna */
+  .teams-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem;
+  }
+
+  /* Tarjetas de equipo más táctiles */
+  .team-card {
+    padding: 1rem;
+    min-height: 60px;
+    font-size: 1rem;
+  }
+
+  /* Formularios responsive */
+  .input-group {
+    grid-template-columns: 1fr !important;
+    gap: 1rem;
+  }
+
+  /* Campos de entrada más grandes para táctil */
+  .input-field, .select-field {
+    min-height: 44px; /* Tamaño mínimo recomendado para táctil */
+    font-size: 16px; /* Evita zoom en iOS */
+    padding: 0.75rem;
+  }
+
+  /* Botones más grandes */
+  .add-btn, .create-btn, .save-btn {
+    min-height: 44px;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+  }
+
+  /* Botones de acción en lista de niños */
+  .edit-btn, .remove-btn {
+    min-width: 44px;
+    min-height: 44px;
+    font-size: 1.2rem;
+  }
+
+  /* Lista de niños responsive */
+  .child-item {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .child-info {
+    text-align: center;
+  }
+
+  .child-actions {
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  /* Header de gestión de equipo */
+  .team-management-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .back-btn {
+    align-self: flex-start;
+  }
+
+  /* Formulario de edición responsive */
+  .edit-input-group {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem;
+  }
+
+  .edit-actions {
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  /* Status badges más legibles */
+  .status-badge {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  /* Botón flotante de crear equipo */
+  .create-team-btn-floating {
+    padding: 1rem;
+    font-size: 1rem;
+  }
+
+  /* Modal responsive */
+  .custom-modal .modal-content {
+    margin: 5% auto;
+    width: 90%;
+    max-width: 400px;
+  }
+}
+
+/* Para pantallas muy pequeñas */
+@media (max-width: 480px) {
+  .header h1 {
+    font-size: 1.3rem;
+  }
+  
+  .child-name {
+    font-size: 1rem;
+  }
+  
+  .input-label {
+    font-size: 0.9rem;
+  }
+  
+  /* Status badges en columna para pantallas muy pequeñas */
+  .child-status {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+/* Orientación landscape en móvil */
+@media (max-width: 768px) and (orientation: landscape) {
+  .input-group {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  
+  .edit-input-group {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* Mejoras para dispositivos táctiles */
+@media (hover: none) and (pointer: coarse) {
+  /* Eliminar efectos hover en dispositivos táctiles */
+  .team-card:hover,
+  .add-btn:hover,
+  .edit-btn:hover,
+  .remove-btn:hover {
+    transform: none;
+  }
+  
+  /* Feedback táctil con active state */
+  .team-card:active,
+  .add-btn:active,
+  .edit-btn:active,
+  .remove-btn:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
+  }
+
+  
+}
+
