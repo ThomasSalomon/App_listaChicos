@@ -17,6 +17,8 @@ interface Child {
   apellido: string
   fecha_nacimiento: string
   edad?: number // Calculada dinámicamente
+  estado_fisico: 'En forma' | 'Lesionado'
+  condicion_pago: 'Al dia' | 'En deuda'
   team_id: number
   team_nombre?: string
   team_color?: string
@@ -32,11 +34,12 @@ function App() {
   const [children, setChildren] = useState<Child[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [currentView, setCurrentView] = useState<'menu' | 'team-management'>('menu')
-    // Estados para el formulario
+  const [currentView, setCurrentView] = useState<'menu' | 'team-management'>('menu')    // Estados para el formulario
   const [nombre, setNombre] = useState('')
   const [apellido, setApellido] = useState('')
   const [fechaNacimiento, setFechaNacimiento] = useState('')
+  const [estadoFisico, setEstadoFisico] = useState<'En forma' | 'Lesionado'>('En forma')
+  const [condicionPago, setCondicionPago] = useState<'Al dia' | 'En deuda'>('Al dia')
   const [showAddChild, setShowAddChild] = useState(false)
   // Estados para modales personalizados
   const [showAlert, setShowAlert] = useState(false)
@@ -167,11 +170,12 @@ function App() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
+          },          body: JSON.stringify({
             nombre: nombre.trim(),
             apellido: apellido.trim(),
             fecha_nacimiento: fechaNacimiento,
+            estado_fisico: estadoFisico,
+            condicion_pago: condicionPago,
             team_id: selectedTeam.id
           })
         })
@@ -183,11 +187,12 @@ function App() {
 
         // Recargar la lista de niños
         await loadChildren(selectedTeam.id)
-        
-        // Limpiar formulario
+          // Limpiar formulario
         setNombre('')
         setApellido('')
         setFechaNacimiento('')
+        setEstadoFisico('En forma')
+        setCondicionPago('Al dia')
         setShowAddChild(false)
         showCustomAlert('Niño agregado exitosamente', 'success')
       } catch (err) {
@@ -453,45 +458,76 @@ function App() {
                   >
                     {showAddChild ? 'Cancelar' : '+ Agregar Niño'}
                   </button>
-                </div>
-
-                {/* Formulario para agregar niño */}
+                </div>                {/* Formulario para agregar niño */}
                 {showAddChild && (
                   <div className="add-section">
                     <div className="input-group">
-                      <input
-                        type="text"
-                        value={nombre}
-                        onChange={(e) => setNombre(e.target.value)}
-                        onKeyPress={handleKeyPress}
-                        placeholder="Nombre"
-                        className="input-field"
-                        maxLength={50}
-                      />
-                      <input
-                        type="text"
-                        value={apellido}
-                        onChange={(e) => setApellido(e.target.value)}
-                        onKeyPress={handleKeyPress}
-                        placeholder="Apellido"
-                        className="input-field"
-                        maxLength={50}
-                      />                      <input
-                        type="date"
-                        value={fechaNacimiento}
-                        onChange={(e) => setFechaNacimiento(e.target.value)}
-                        onKeyPress={handleKeyPress}
-                        placeholder="Fecha de nacimiento"
-                        className="input-field input-date"
-                        max={new Date().toISOString().split('T')[0]} // No permitir fechas futuras
-                      />
-                      <button 
-                        onClick={addChild} 
-                        className="add-btn"
-                        style={{ backgroundColor: selectedTeam.color }}
-                      >
-                        Agregar
-                      </button>
+                      <div className="input-container">
+                        <label className="input-label">Nombre</label>
+                        <input
+                          type="text"
+                          value={nombre}
+                          onChange={(e) => setNombre(e.target.value)}
+                          onKeyPress={handleKeyPress}
+                          placeholder="Ingresa el nombre"
+                          className="input-field"
+                          maxLength={50}
+                        />
+                      </div>
+                      <div className="input-container">
+                        <label className="input-label">Apellido</label>
+                        <input
+                          type="text"
+                          value={apellido}
+                          onChange={(e) => setApellido(e.target.value)}
+                          onKeyPress={handleKeyPress}
+                          placeholder="Ingresa el apellido"
+                          className="input-field"
+                          maxLength={50}
+                        />
+                      </div>
+                      <div className="input-container">
+                        <label className="input-label">Fecha de Nacimiento</label>
+                        <input
+                          type="date"
+                          value={fechaNacimiento}
+                          onChange={(e) => setFechaNacimiento(e.target.value)}
+                          onKeyPress={handleKeyPress}
+                          className="input-field input-date"
+                          max={new Date().toISOString().split('T')[0]} // No permitir fechas futuras
+                        />
+                      </div>
+                      <div className="input-container">
+                        <label className="input-label">Estado Físico</label>
+                        <select
+                          value={estadoFisico}
+                          onChange={(e) => setEstadoFisico(e.target.value as 'En forma' | 'Lesionado')}
+                          className="input-field select-field"
+                        >
+                          <option value="En forma">💪 En forma</option>
+                          <option value="Lesionado">🤕 Lesionado</option>
+                        </select>
+                      </div>
+                      <div className="input-container">
+                        <label className="input-label">Condición de Pago</label>
+                        <select
+                          value={condicionPago}
+                          onChange={(e) => setCondicionPago(e.target.value as 'Al dia' | 'En deuda')}
+                          className="input-field select-field"
+                        >
+                          <option value="Al dia">✅ Al día</option>
+                          <option value="En deuda">⚠️ En deuda</option>
+                        </select>
+                      </div>                      <div className="input-container">
+                        <label className="input-label">&nbsp;</label>
+                        <button 
+                          onClick={addChild} 
+                          className="add-btn"
+                          style={{ backgroundColor: selectedTeam.color }}
+                        >
+                          Agregar
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -528,6 +564,14 @@ function App() {
                               <span className="child-birth-date">
                                 Nació: {new Date(child.fecha_nacimiento).toLocaleDateString('es-ES')}
                               </span>
+                              <div className="child-status">
+                                <span className={`status-badge status-fisico ${child.estado_fisico?.toLowerCase().replace(' ', '-')}`}>
+                                  {child.estado_fisico === 'En forma' ? '💪' : '🤕'} {child.estado_fisico || 'En forma'}
+                                </span>
+                                <span className={`status-badge status-pago ${child.condicion_pago?.toLowerCase().replace(' ', '-')}`}>
+                                  {child.condicion_pago === 'Al dia' ? '✅' : '⚠️'} {child.condicion_pago || 'Al día'}
+                                </span>
+                              </div>
                             </div>
                             <button 
                               onClick={() => removeChild(child.id)}

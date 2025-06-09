@@ -54,12 +54,11 @@ class ChildrenController {
         message: 'No se pudo obtener la información del niño'
       });
     }
-  }
-  /**
+  }  /**
    * Crear un nuevo niño
    */  static async createChild(req, res) {
     try {
-      const { nombre, apellido, fecha_nacimiento, team_id } = req.body;
+      const { nombre, apellido, fecha_nacimiento, estado_fisico, condicion_pago, team_id } = req.body;
       
       // Validaciones básicas
       if (!nombre || !apellido || !fecha_nacimiento) {
@@ -106,11 +105,27 @@ class ChildrenController {
         return res.status(400).json({ 
           error: 'Team ID inválido',
           message: 'El team_id debe ser un número válido mayor a 0'
+        });      }      // Validar valores de los nuevos campos
+      if (estado_fisico && !['En forma', 'Lesionado'].includes(estado_fisico)) {
+        return res.status(400).json({ 
+          error: 'Estado físico inválido',
+          message: 'El estado físico debe ser "En forma" o "Lesionado"'
         });
-      }      const childData = {
+      }
+
+      if (condicion_pago && !['Al dia', 'En deuda'].includes(condicion_pago)) {
+        return res.status(400).json({ 
+          error: 'Condición de pago inválida',
+          message: 'La condición de pago debe ser "Al dia" o "En deuda"'
+        });
+      }
+
+      const childData = {
         nombre: nombre.trim(),
         apellido: apellido.trim(),
         fecha_nacimiento: fecha_nacimiento,
+        estado_fisico: estado_fisico || 'En forma',
+        condicion_pago: condicion_pago || 'Al dia',
         team_id: teamId
       };
 
@@ -128,13 +143,12 @@ class ChildrenController {
       });
     }
   }
-
   /**
    * Actualizar un niño existente
    */  static async updateChild(req, res) {
     try {
       const { id } = req.params;
-      const { nombre, apellido, fecha_nacimiento } = req.body;
+      const { nombre, apellido, fecha_nacimiento, estado_fisico, condicion_pago } = req.body;
       
       // Validar ID
       if (!id || isNaN(parseInt(id))) {
@@ -168,9 +182,7 @@ class ChildrenController {
           error: 'Fecha de nacimiento inválida',
           message: 'La fecha de nacimiento no puede ser futura'
         });
-      }
-
-      // Validar nombres
+      }      // Validar nombres
       if (!nombre.trim() || !apellido.trim()) {
         return res.status(400).json({ 
           error: 'Nombres inválidos',
@@ -178,10 +190,27 @@ class ChildrenController {
         });
       }
 
+      // Validar valores de los nuevos campos
+      if (estado_fisico && !['En forma', 'Lesionado'].includes(estado_fisico)) {
+        return res.status(400).json({ 
+          error: 'Estado físico inválido',
+          message: 'El estado físico debe ser "En forma" o "Lesionado"'
+        });
+      }
+
+      if (condicion_pago && !['Al dia', 'En deuda'].includes(condicion_pago)) {
+        return res.status(400).json({ 
+          error: 'Condición de pago inválida',
+          message: 'La condición de pago debe ser "Al dia" o "En deuda"'
+        });
+      }
+
       const childData = {
         nombre: nombre.trim(),
         apellido: apellido.trim(),
-        fecha_nacimiento: fecha_nacimiento
+        fecha_nacimiento: fecha_nacimiento,
+        estado_fisico: estado_fisico || 'En forma',
+        condicion_pago: condicion_pago || 'Al dia'
       };
 
       const updatedChild = await ChildrenModel.update(parseInt(id), childData);

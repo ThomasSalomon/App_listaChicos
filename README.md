@@ -15,15 +15,23 @@ Una aplicación de escritorio moderna para gestionar listas de niños, construid
 - ✅ **Registro con Fecha de Nacimiento**: Sistema moderno que registra la fecha de nacimiento en lugar de edad manual
 - 🎂 **Cálculo Automático de Edad**: La edad se calcula automáticamente basada en la fecha de nacimiento
 - 📅 **Actualización de Cumpleaños**: La edad se actualiza automáticamente cuando es el cumpleaños del niño
+- 💪 **Estado Físico**: Seguimiento del estado físico de cada niño
+  - 💪 "En forma" - Niño disponible para actividades completas
+  - 🤕 "Lesionado" - Niño con limitaciones físicas temporales
+- 💰 **Condición de Pago**: Gestión del estado de pagos
+  - ✅ "Al día" - Pagos actualizados sin pendientes
+  - ⚠️ "En deuda" - Pagos pendientes que requieren atención
+- 🏷️ **Etiquetas de Estado**: Badges visuales con iconos y colores para identificación rápida
 - 📝 **Validación Inteligente**: 
   - Fechas futuras no permitidas
   - Validación de edad entre 0-25 años
   - Formato de fecha intuitivo (DD/MM/AAAA)
+  - Validación de campos obligatorios y opcionales
 - ❌ Eliminar niños de la lista individualmente  
 - 🗑️ Limpiar toda la lista con confirmación
 - 💾 Persistencia de datos con base de datos SQLite
 - 📊 Contador total de niños
-- 👁️ **Visualización Completa**: Muestra nombre, edad actual y fecha de nacimiento
+- 👁️ **Visualización Completa**: Muestra nombre, edad actual, fecha de nacimiento, estado físico y condición de pago
 
 ### 🎨 Interfaz y Experiencia
 - 🌈 Interfaz moderna con efectos glassmorphism
@@ -41,14 +49,20 @@ Una aplicación de escritorio moderna para gestionar listas de niños, construid
 - **Desktop**: Electron
 - **Estilos**: CSS personalizado con efectos modernos
 
-## 🚀 Instalación y Desarrollo
+## 🚀 Instalación y Configuración
 
-### 📋 Requisitos Previos
-- Node.js (versión 16 o superior)
-- npm (viene incluido con Node.js)
-- Git (para clonar el repositorio)
+### 📋 Requisitos del Sistema
+- **Para Desarrollo**:
+  - Node.js (versión 16 o superior)
+  - npm (viene incluido con Node.js)
+  - Git (para clonar el repositorio)
+- **Para Usuario Final**:
+  - Windows 10/11 (64 bits)
+  - Sin requisitos adicionales (todo incluido)
+  - No necesita Node.js, npm o dependencias externas
+  - Funciona sin conexión a internet
 
-### 💾 Instalación Completa
+### 💻 Instalación para Desarrolladores
 
 #### 1. Clonar el Repositorio
 ```bash
@@ -72,76 +86,54 @@ npm install
 cd ..
 ```
 
-### 🔧 Comandos de Desarrollo
-
-#### Ejecutar en Modo Desarrollo (Recomendado)
+#### 3. Comandos de Desarrollo
 ```bash
-# Ejecuta frontend, backend y Electron simultáneamente
+# Ejecutar en Modo Desarrollo (Recomendado)
 npm run dev
-```
-Este comando inicia:
-- 🖥️ **Backend API** en `http://localhost:3001`
-- 🌐 **Frontend Vite** en `http://localhost:5173`
-- ⚡ **Aplicación Electron** conectando ambos
+# Inicia: Backend API (puerto 3001) + Frontend Vite (puerto 5173) + Electron
 
-#### Ejecutar Componentes por Separado
-```bash
-# Solo backend (API Server)
-npm run dev:backend
-
-# Solo frontend (React + Vite)
-npm run dev:frontend
-
-# Solo Electron
-npm run dev:electron
+# Ejecutar Componentes por Separado
+npm run dev:backend    # Solo backend (API Server)
+npm run dev:frontend   # Solo frontend (React + Vite)
+npm run dev:electron   # Solo Electron
 ```
 
-### 🏗️ Construcción y Distribución
-
-#### Construir para Producción
+#### 4. Construcción y Distribución
 ```bash
+# Construir para Producción
 npm run build
+
+# Crear Ejecutable para Windows
+npm run dist:installer  # Instalador NSIS profesional (recomendado)
+npm run dist:portable   # Versión portable
+npm run dist:both       # Ambas versiones
 ```
-
-#### Crear Ejecutable para Windows
-```bash
-# Instalador NSIS profesional (recomendado)
-npm run dist:installer
-
-# Versión portable
-npm run dist:portable
-
-# Ambas versiones
-npm run dist:both
-```
-
-#### Archivos Generados
-- **Instalador**: `dist-installer/Lista de Chicos Setup 1.0.0.exe`
-- **Portable**: `dist-installer/win-unpacked/Lista de Chicos.exe`
 
 ### 📦 Instalación para Usuario Final
 
-#### Opción 1: Instalador Profesional (Recomendado)
-1. Descargar `Lista de Chicos Setup 1.0.0.exe`
-2. Ejecutar el instalador como administrador
-3. Seguir las instrucciones del asistente de instalación
-4. La aplicación se instalará automáticamente con:
+#### 🌟 Opción 1: Instalador Profesional (Recomendado)
+1. **Descargar**: `Lista de Chicos Setup 1.0.0.exe` desde la carpeta `dist-installer/`
+2. **Ejecutar**: Como administrador haciendo clic derecho → "Ejecutar como administrador"
+3. **Seguir**: Las instrucciones del asistente de instalación
+4. **Resultado**: La aplicación se instala automáticamente con:
    - ✅ Acceso directo en el escritorio
    - ✅ Entrada en el menú de inicio
    - ✅ Registro en programas instalados
    - ✅ Desinstalador automático
 
-#### Opción 2: Versión Portable
-1. Descargar la carpeta `win-unpacked` completa
-2. Extraer en cualquier ubicación de tu computadora
-3. Ejecutar `Lista de Chicos.exe` directamente
-4. **Ventajas**: No requiere instalación, se ejecuta desde cualquier lugar
+#### 📁 Opción 2: Versión Portable
+1. **Descargar**: La carpeta `win-unpacked` completa desde `dist-installer/`
+2. **Extraer**: En cualquier ubicación de tu computadora
+3. **Ejecutar**: `Lista de Chicos.exe` directamente
+4. **Ventajas**: 
+   - No requiere instalación
+   - Se ejecuta desde cualquier lugar
+   - Perfecto para USB o dispositivos removibles
 
-#### Requisitos del Sistema
-- ✅ Windows 10/11 (64 bits)
-- ✅ Sin requisitos adicionales (todo incluido)
-- ✅ No necesita Node.js, npm o dependencias externas
-- ✅ Funciona sin conexión a internet
+#### 📊 Archivos Generados
+- **Instalador**: `dist-installer/Lista de Chicos Setup 1.0.0.exe` (~87 MB)
+- **Portable**: `dist-installer/win-unpacked/Lista de Chicos.exe` (~193 MB)
+- **Metadatos**: `dist-installer/latest.yml` (información de versión)
 
 ## 📁 Estructura del Proyecto
 
@@ -206,10 +198,12 @@ Lista-de-Chicos/
 -- Tabla de equipos
 CREATE TABLE teams (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    description TEXT,
+    nombre TEXT NOT NULL,
+    descripcion TEXT,
     color TEXT DEFAULT '#3498db',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    activo BOOLEAN DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Tabla de niños
@@ -218,14 +212,19 @@ CREATE TABLE children (
     nombre TEXT NOT NULL,
     apellido TEXT NOT NULL,
     fecha_nacimiento DATE NOT NULL,
+    estado_fisico TEXT DEFAULT 'En forma' CHECK (estado_fisico IN ('En forma', 'Lesionado')),
+    condicion_pago TEXT DEFAULT 'Al dia' CHECK (condicion_pago IN ('Al dia', 'En deuda')),
     team_id INTEGER,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (team_id) REFERENCES teams(id)
 );
 
--- Nota: La edad se calcula dinámicamente usando la fecha_nacimiento
--- Funciones auxiliares de cálculo de edad disponibles en backend/utils/helpers.js
+-- Notas:
+-- • La edad se calcula dinámicamente usando fecha_nacimiento
+-- • estado_fisico: 'En forma' (💪) | 'Lesionado' (🤕)
+-- • condicion_pago: 'Al dia' (✅) | 'En deuda' (⚠️)
+-- • Funciones auxiliares de cálculo disponibles en backend/utils/helpers.js
 ```
 
 ### Personalización
@@ -251,9 +250,15 @@ CREATE TABLE children (
      - **Nombre**: Obligatorio (2-50 caracteres)
      - **Apellido**: Obligatorio (2-50 caracteres)
      - **Fecha de Nacimiento**: Selecciona usando el calendario (no se permiten fechas futuras)
+     - **Estado Físico**: Selecciona entre "💪 En forma" o "🤕 Lesionado"
+     - **Condición de Pago**: Selecciona entre "✅ Al día" o "⚠️ En deuda"
    - La edad se calcula automáticamente
    - Presiona "Agregar" para guardar
-2. **Ver información**: Cada niño muestra nombre completo, edad actual y fecha de nacimiento
+2. **Ver información**: Cada niño muestra:
+   - Nombre completo y edad actual
+   - Fecha de nacimiento formateada
+   - Estado físico con badge visual e icono
+   - Condición de pago con badge visual e icono
 3. **Eliminar un niño**: Haz clic en el botón ❌ junto al nombre con confirmación de seguridad
 4. **Actualización automática**: Las edades se actualizan automáticamente en tiempo real
 
@@ -263,6 +268,33 @@ CREATE TABLE children (
 3. **Cierre Automático**: Confirma para cerrar la aplicación de forma segura
 
 ## 🔄 Historial de Versiones
+
+### v3.1 (Junio 2025) - "Estado Físico y Condición de Pago"
+**🎯 Nueva Funcionalidad**: Sistema completo de seguimiento de estado físico y pagos
+
+**🔧 Cambios Principales**:
+- ✅ **Estado Físico**: Nuevo campo con opciones "En forma" y "Lesionado"
+- ✅ **Condición de Pago**: Nuevo campo con opciones "Al día" y "En deuda"
+- ✅ **Etiquetas Visuales**: Badges con iconos y colores para identificación rápida
+- ✅ **Base de Datos Actualizada**: Nuevas columnas con restricciones CHECK
+- ✅ **Migración Automática**: Conversión de datos existentes con valores por defecto
+- ✅ **Formulario Mejorado**: Labels descriptivos arriba de cada campo
+- ✅ **Validación Completa**: Backend y frontend validan nuevos campos
+
+**🚀 Funcionalidades Nuevas**:
+- 💪 Seguimiento de estado físico con iconos
+- 💰 Gestión de pagos con alertas visuales
+- 🏷️ Sistema de badges con colores temáticos
+- 📝 Etiquetas en formularios para mejor UX
+- 🔄 Migración automática preservando datos existentes
+
+**🛠️ Cambios Técnicos**:
+- `backend/config/database.js` - Schema actualizado con nuevos campos
+- `backend/models/Children.js` - Soporte para estado_fisico y condicion_pago
+- `backend/controllers/childrenController.js` - Validación de nuevos campos
+- `backend/middleware/validation.js` - Middleware actualizado
+- `frontend/src/App.tsx` - Interfaz con selects y badges
+- `frontend/src/App.css` - Estilos para badges y contenedores
 
 ### v3.0 (Junio 2025) - "Sistema de Fecha de Nacimiento"
 **🎯 Mejora Principal**: Reemplazo completo del sistema de edad manual por fechas de nacimiento
@@ -283,14 +315,6 @@ CREATE TABLE children (
 - 🎂 Actualización automática de edad en cumpleaños
 - 👁️ Visualización de fecha de nacimiento y edad calculada
 - 🔄 Migración automática de datos existentes
-
-**🛠️ Cambios Técnicos**:
-- `backend/models/Children.js` - Reescrito completamente
-- `backend/controllers/childrenController.js` - Actualizado para fecha de nacimiento
-- `backend/middleware/validation.js` - Nueva validación de fechas
-- `backend/utils/helpers.js` - Funciones de cálculo de edad
-- `frontend/src/App.tsx` - Interfaz actualizada con inputs de fecha
-- `backend/config/database.js` - Migración automática de esquema
 
 ### v2.0 (Junio 2025) - "Eliminación de Equipo Automático"
 **🎯 Problema Resuelto**: Ya no se crea automáticamente "Equipo Principal"
@@ -332,6 +356,14 @@ npm install -g electron-builder
 npm run dist:installer
 ```
 
+#### Error: "Nuevos campos no se guardan correctamente"
+```bash
+# Verificar migración de base de datos para nuevos campos
+cd backend
+node debug-db.js  # Ver estructura actual con estado_fisico y condicion_pago
+# La migración se ejecuta automáticamente al iniciar
+```
+
 #### Error: "Fechas de nacimiento no se guardan correctamente"
 ```bash
 # Verificar migración de base de datos
@@ -354,6 +386,16 @@ cd backend/utils
 - ✅ Verificar Windows 10/11 64-bit
 - ✅ Ejecutar como administrador
 - ✅ Verificar antivirus no bloquee el ejecutable
+
+#### "Formulario no acepta campos nuevos"
+- ✅ Verificar versión v3.1 o superior
+- ✅ Comprobar que los campos de estado físico y condición de pago estén disponibles
+- ✅ Verificar que los selects muestren las opciones correctas
+
+#### "Badges de estado no se muestran correctamente"
+- ✅ Verificar que los datos incluyan estado_fisico y condicion_pago
+- ✅ Recargar la aplicación para ver los cambios
+- ✅ Verificar que los estilos CSS estén aplicados correctamente
 
 #### "Formulario no acepta fechas de nacimiento"
 - ✅ Verificar versión v3.0 o superior

@@ -9,7 +9,7 @@ const { isValidBirthDate, calculateAge } = require('../utils/helpers');
  * Valida los datos de un niño
  */
 const validateChild = (req, res, next) => {
-  const { nombre, apellido, fecha_nacimiento, team_id } = req.body;
+  const { nombre, apellido, fecha_nacimiento, estado_fisico, condicion_pago, team_id } = req.body;
   const errors = [];
 
   // Validar nombre
@@ -56,6 +56,24 @@ const validateChild = (req, res, next) => {
       } else if (edad < 0) {
         errors.push('La fecha de nacimiento debe ser válida');
       }
+    }
+  }
+
+  // Validar estado_fisico (opcional)
+  if (estado_fisico !== undefined && estado_fisico !== null) {
+    if (typeof estado_fisico !== 'string') {
+      errors.push('El estado físico debe ser una cadena de texto');
+    } else if (!['En forma', 'Lesionado'].includes(estado_fisico)) {
+      errors.push('El estado físico debe ser "En forma" o "Lesionado"');
+    }
+  }
+
+  // Validar condicion_pago (opcional)
+  if (condicion_pago !== undefined && condicion_pago !== null) {
+    if (typeof condicion_pago !== 'string') {
+      errors.push('La condición de pago debe ser una cadena de texto');
+    } else if (!['Al dia', 'En deuda'].includes(condicion_pago)) {
+      errors.push('La condición de pago debe ser "Al dia" o "En deuda"');
     }
   }
 

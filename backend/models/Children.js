@@ -76,23 +76,30 @@ class ChildrenModel {
       });
     });
   }
-
   // Crear un nuevo niño
   static create(childData) {
     return new Promise((resolve, reject) => {
-      const { nombre, apellido, fecha_nacimiento, team_id } = childData;
+      const { nombre, apellido, fecha_nacimiento, estado_fisico, condicion_pago, team_id } = childData;
       const formattedDate = formatBirthDateForDB(fecha_nacimiento);
-      const sql = 'INSERT INTO children (nombre, apellido, fecha_nacimiento, team_id) VALUES (?, ?, ?, ?)';
+      const sql = 'INSERT INTO children (nombre, apellido, fecha_nacimiento, estado_fisico, condicion_pago, team_id) VALUES (?, ?, ?, ?, ?, ?)';
       
-      database.getDB().run(sql, [nombre.trim(), apellido.trim(), formattedDate, team_id || 1], function(err) {
+      database.getDB().run(sql, [
+        nombre.trim(), 
+        apellido.trim(), 
+        formattedDate, 
+        estado_fisico || 'En forma',
+        condicion_pago || 'Al dia',
+        team_id || 1
+      ], function(err) {
         if (err) {
-          reject(err);
-        } else {
+          reject(err);        } else {
           const newChild = {
             id: this.lastID,
             nombre: nombre.trim(),
             apellido: apellido.trim(),
             fecha_nacimiento: formattedDate,
+            estado_fisico: estado_fisico || 'En forma',
+            condicion_pago: condicion_pago || 'Al dia',
             edad: calculateAge(formattedDate),
             team_id: team_id || 1,
             created_at: new Date().toISOString()
@@ -102,15 +109,22 @@ class ChildrenModel {
       });
     });
   }
-
   // Actualizar un niño
   static update(id, childData) {
     return new Promise((resolve, reject) => {
-      const { nombre, apellido, fecha_nacimiento, team_id } = childData;
+      const { nombre, apellido, fecha_nacimiento, estado_fisico, condicion_pago, team_id } = childData;
       const formattedDate = formatBirthDateForDB(fecha_nacimiento);
-      const sql = 'UPDATE children SET nombre = ?, apellido = ?, fecha_nacimiento = ?, team_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?';
+      const sql = 'UPDATE children SET nombre = ?, apellido = ?, fecha_nacimiento = ?, estado_fisico = ?, condicion_pago = ?, team_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?';
       
-      database.getDB().run(sql, [nombre.trim(), apellido.trim(), formattedDate, team_id || 1, id], function(err) {
+      database.getDB().run(sql, [
+        nombre.trim(), 
+        apellido.trim(), 
+        formattedDate, 
+        estado_fisico || 'En forma',
+        condicion_pago || 'Al dia',
+        team_id || 1, 
+        id
+      ], function(err) {
         if (err) {
           reject(err);
         } else if (this.changes === 0) {
@@ -121,6 +135,8 @@ class ChildrenModel {
             nombre: nombre.trim(),
             apellido: apellido.trim(),
             fecha_nacimiento: formattedDate,
+            estado_fisico: estado_fisico || 'En forma',
+            condicion_pago: condicion_pago || 'Al dia',
             edad: calculateAge(formattedDate),
             team_id: team_id || 1,
             updated_at: new Date().toISOString()

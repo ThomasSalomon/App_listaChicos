@@ -61,10 +61,18 @@ class Database {
             const hasTeamId = columns.some(col => col.name === 'team_id');
             const hasFechaNacimiento = columns.some(col => col.name === 'fecha_nacimiento');
             const hasEdad = columns.some(col => col.name === 'edad');
+            const hasEstadoFisico = columns.some(col => col.name === 'estado_fisico');
+            const hasCondicionPago = columns.some(col => col.name === 'condicion_pago');
             
-            if (!hasTeamId || (hasEdad && !hasFechaNacimiento)) {
+            if (!hasTeamId || (hasEdad && !hasFechaNacimiento) || !hasEstadoFisico || !hasCondicionPago) {
               // Necesita migración
-              this.migrateExistingTable(resolve, reject, { hasTeamId, hasFechaNacimiento, hasEdad });
+              this.migrateExistingTable(resolve, reject, { 
+                hasTeamId, 
+                hasFechaNacimiento, 
+                hasEdad, 
+                hasEstadoFisico, 
+                hasCondicionPago 
+              });
             } else {
               // La tabla ya está actualizada
               resolve();
@@ -73,17 +81,26 @@ class Database {
         }
       });
     });
-  }
-  // Migrar tabla existente
+  }  // Migrar tabla existente
   async migrateExistingTable(resolve, reject, flags = {}) {
     console.log('🔄 Migrando tabla children existente...');
     
-    const { hasTeamId, hasFechaNacimiento, hasEdad } = flags;
+    const { hasTeamId, hasFechaNacimiento, hasEdad, hasEstadoFisico, hasCondicionPago } = flags;
     const migrateSteps = [];
     
     // Agregar columna team_id si no existe
     if (!hasTeamId) {
       migrateSteps.push(`ALTER TABLE children ADD COLUMN team_id INTEGER`);
+    }
+    
+    // Agregar columna estado_fisico si no existe
+    if (!hasEstadoFisico) {
+      migrateSteps.push(`ALTER TABLE children ADD COLUMN estado_fisico TEXT DEFAULT 'En forma' CHECK (estado_fisico IN ('En forma', 'Lesionado'))`);
+    }
+    
+    // Agregar columna condicion_pago si no existe
+    if (!hasCondicionPago) {
+      migrateSteps.push(`ALTER TABLE children ADD COLUMN condicion_pago TEXT DEFAULT 'Al dia' CHECK (condicion_pago IN ('Al dia', 'En deuda'))`);
     }
     
     // Migrar de edad a fecha_nacimiento si es necesario
@@ -106,6 +123,8 @@ class Database {
           nombre TEXT NOT NULL,
           apellido TEXT NOT NULL,
           fecha_nacimiento DATE NOT NULL,
+          estado_fisico TEXT DEFAULT 'En forma' CHECK (estado_fisico IN ('En forma', 'Lesionado')),
+          condicion_pago TEXT DEFAULT 'Al dia' CHECK (condicion_pago IN ('Al dia', 'En deuda')),
           team_id INTEGER,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -115,8 +134,11 @@ class Database {
       
       // Copiar datos a la nueva tabla
       migrateSteps.push(`
-        INSERT INTO children_new (id, nombre, apellido, fecha_nacimiento, team_id, created_at, updated_at)
-        SELECT id, nombre, apellido, fecha_nacimiento, team_id, created_at, updated_at
+        INSERT INTO children_new (id, nombre, apellido, fecha_nacimiento, estado_fisico, condicion_pago, team_id, created_at, updated_at)
+        SELECT id, nombre, apellido, fecha_nacimiento, 
+               COALESCE(estado_fisico, 'En forma') as estado_fisico,
+               COALESCE(condicion_pago, 'Al dia') as condicion_pago,
+               team_id, created_at, updated_at
         FROM children
       `);
       
@@ -169,6 +191,8 @@ class Database {
         nombre TEXT NOT NULL,
         apellido TEXT NOT NULL,
         fecha_nacimiento DATE NOT NULL,
+        estado_fisico TEXT DEFAULT 'En forma' CHECK (estado_fisico IN ('En forma', 'Lesionado')),
+        condicion_pago TEXT DEFAULT 'Al dia' CHECK (condicion_pago IN ('Al dia', 'En deuda')),
         team_id INTEGER,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
