@@ -325,6 +325,63 @@
   opacity: 1;
 }
 
+/* Contenedor para tarjeta de equipo con botón de eliminar */
+.team-card-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  animation: cardSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+  transform: translateY(40px) scale(0.9);
+}
+
+/* Botón de eliminar equipo */
+.team-delete-btn {
+  background: rgba(220, 38, 127, 0.12) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  border: 1px solid rgba(220, 38, 127, 0.25) !important;
+  border-radius: 16px !important;
+  color: #ff6b9d;
+  padding: 8px 12px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 
+    0 4px 20px rgba(220, 38, 127, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.team-delete-btn:hover {
+  background: rgba(220, 38, 127, 0.25) !important;
+  border-color: rgba(220, 38, 127, 0.5) !important;
+  color: #fff;
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 
+    0 8px 32px rgba(220, 38, 127, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.team-delete-btn:active {
+  transform: translateY(0) scale(1.02);
+  transition: all 0.1s ease;
+}
+
+/* Animación escalonada para contenedores */
+.team-card-container:nth-child(1) { animation-delay: 0.12s; }
+.team-card-container:nth-child(2) { animation-delay: 0.22s; }
+.team-card-container:nth-child(3) { animation-delay: 0.32s; }
+.team-card-container:nth-child(4) { animation-delay: 0.42s; }
+.team-card-container:nth-child(5) { animation-delay: 0.52s; }
+
 @media (max-width: 700px) {
   .teams-grid {
     grid-template-columns: 1fr;
@@ -349,9 +406,15 @@
   }
   .team-card .team-description {
     font-size: 0.95rem;
-  }
-  .team-card .team-arrow {
+  }  .team-card .team-arrow {
     font-size: 1.8rem;
+  }
+  
+  .team-delete-btn {
+    min-width: 40px;
+    min-height: 40px;
+    font-size: 1rem;
+    padding: 6px 10px;
   }
 }
 
@@ -1816,6 +1879,6 @@
     transition: transform 0.1s ease;
   }
 
-  
+
 }
 

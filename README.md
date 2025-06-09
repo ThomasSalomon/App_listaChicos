@@ -10,6 +10,12 @@ Una aplicación de escritorio moderna para gestionar listas de niños, construid
 - 📝 **Validación**: Formularios con validación completa (nombre obligatorio 2-50 caracteres)
 - 🎯 **Interfaz Intuitiva**: Diseño centrado con animaciones fluidas
 - 📱 **Responsive**: Optimizado para dispositivos móviles
+- 🗑️ **Eliminar Equipos**: Sistema completo de eliminación de equipos con confirmación
+  - 🔒 **Protección de Datos**: No permite eliminar equipos que tienen niños asignados (previene pérdida de datos)
+  - ⚠️ **Confirmación Doble**: Dialog de confirmación personalizado antes de eliminar
+  - 🔄 **Navegación Inteligente**: Si eliminas el equipo actualmente seleccionado, automáticamente regresa al menú principal
+  - 💾 **Eliminación Suave**: Los equipos se marcan como inactivos en lugar de ser borrados físicamente (recuperables)
+  - 🎨 **Botón Estilizado**: Botón de eliminar con diseño glassmorphism y efectos hover modernos
 
 ### 👶 Gestión de Niños
 
@@ -225,7 +231,7 @@ Lista-de-Chicos/
 - `GET /api/teams` - Obtener todos los equipos
 - `POST /api/teams` - Crear nuevo equipo (con validación)
 - `PUT /api/teams/:id` - Actualizar equipo existente
-- `DELETE /api/teams/:id` - Eliminar equipo
+- `DELETE /api/teams/:id` - **Eliminar equipo** (con validación de niños asignados, implementado en v3.3)
 - `GET /api/children` - Obtener todos los niños (con edad calculada)
 - `POST /api/children` - Agregar nuevo niño (requiere fecha_nacimiento)
 - `PUT /api/children/:id` - **Actualizar niño existente** (nombre, apellido, fecha_nacimiento, estado_fisico, condicion_pago)
@@ -283,6 +289,17 @@ CREATE TABLE children (
      - **Color**: Selecciona con el color picker
    - Presiona "Crear Equipo" para guardar
 
+2. **Seleccionar un equipo**: 
+   - Haz clic en cualquier tarjeta de equipo para acceder a la gestión de niños
+
+3. **Eliminar un equipo**: 
+   - Haz clic en el botón 🗑️ debajo de la tarjeta del equipo que deseas eliminar
+   - Confirma la eliminación en el diálogo que aparece
+   - **Nota importante**: 
+     - ⚠️ Los equipos con niños asignados **NO** se pueden eliminar (protección de datos)
+     - 🔄 Si eliminas el equipo actualmente seleccionado, automáticamente regresarás al menú principal
+     - 💾 Los equipos se eliminan de forma "suave" (marcados como inactivos, no borrados físicamente)
+
 ### Gestión de Niños
 1. **Agregar un niño**: 
    - Completa el formulario con:
@@ -322,6 +339,31 @@ CREATE TABLE children (
 3. **Cierre Automático**: Confirma para cerrar la aplicación de forma segura
 
 ## 🔄 Historial de Versiones
+
+### v3.3 (Junio 2025) - "Eliminación Segura de Equipos"
+**🎯 Nueva Funcionalidad**: Sistema completo para eliminar equipos con protecciones de seguridad
+
+**🔧 Cambios Principales**:
+- ✅ **Botón de Eliminar**: Nuevo botón 🗑️ con diseño glassmorphism debajo de cada tarjeta de equipo
+- ✅ **Protección de Datos**: Previene eliminación de equipos que tienen niños asignados (backend valida)
+- ✅ **Confirmación Doble**: Diálogo personalizado de confirmación antes de proceder con la eliminación
+- ✅ **Navegación Inteligente**: Si eliminas el equipo seleccionado, automáticamente regresa al menú principal
+- ✅ **Eliminación Suave**: Los equipos se marcan como `activo = 0` en lugar de ser borrados físicamente
+- ✅ **Responsive**: Botón de eliminar optimizado para móviles con tamaño táctil adecuado
+
+**🚀 Funcionalidades Nuevas**:
+- 🗑️ Interfaz moderna para eliminar equipos con efectos hover
+- 🔒 Sistema de protección que preserva integridad de datos
+- ⚠️ Mensajes de error informativos cuando no se puede eliminar
+- 🎨 Diseño consistente con el resto de la aplicación
+- 📱 Experiencia optimizada en dispositivos móviles
+
+**🛠️ Cambios Técnicos**:
+- `frontend/src/App.tsx` - Nueva función `deleteTeam()` con confirmación y navegación
+- `frontend/src/App.css` - Estilos para `.team-card-container` y `.team-delete-btn`
+- `backend/controllers/teamsController.js` - Validación existente de niños antes de eliminar
+- `backend/routes/teams.js` - Endpoint DELETE ya implementado con seguridad
+- Backend ya tenía todas las protecciones necesarias implementadas
 
 ### v3.2 (Junio 2025) - "Sistema de Edición In-Situ"
 **🎯 Nueva Funcionalidad**: Sistema completo de edición de niños existentes sin ventanas emergentes
@@ -476,6 +518,31 @@ cd backend/utils
 - ✅ Buscar el botón de editar (✏️) junto a cada niño
 - ✅ Comprobar que no esté activo el modo "agregar niño"
 - ✅ Verificar que el formulario de edición aparezca en línea
+
+#### "Los cambios de edición no se guardan"
+- ✅ Verificar conexión con backend (PUT /api/children/:id)
+- ✅ Comprobar validación de campos (todos los campos son obligatorios)
+- ✅ Usar el botón guardar (💾) o presionar Enter
+- ✅ Verificar que no haya errores en el formulario
+
+#### "No puedo eliminar equipos"
+- ✅ Verificar versión v3.3 o superior
+- ✅ Buscar el botón 🗑️ debajo de cada tarjeta de equipo
+- ✅ **Equipos con niños NO se pueden eliminar** (por seguridad de datos)
+- ✅ Eliminar primero todos los niños del equipo, luego eliminar el equipo
+- ✅ Verificar conexión con backend (DELETE /api/teams/:id)
+
+#### "El botón de eliminar equipo no aparece"
+- ✅ Verificar que estés en la vista del menú principal (no en gestión de equipo)
+- ✅ Comprobar que los estilos CSS estén cargando correctamente
+- ✅ Verificar que tengas equipos creados para mostrar
+- ✅ Recargar la aplicación si es necesario
+
+#### "Error: 'No se puede eliminar el equipo porque tiene niños asignados'"
+- ✅ **Comportamiento normal de seguridad**
+- ✅ Ir al equipo y eliminar todos los niños primero
+- ✅ Luego regresar al menú y eliminar el equipo
+- ✅ Esta protección previene pérdida accidental de datos
 
 #### "Los cambios de edición no se guardan"
 - ✅ Verificar conexión con backend (PUT /api/children/:id)

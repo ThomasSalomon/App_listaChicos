@@ -376,28 +376,21 @@ function App() {
     setSelectedTeam(null)
     setShowAddChild(false)
   }
-
-  // Función para cerrar la aplicación
+  // Función para manejar salida de la aplicación
   const handleExitApp = () => {
     showCustomConfirm('¿Estás seguro de que quieres salir de la aplicación?', () => {
-      // En Electron, podemos cerrar la ventana principal
       if ((window as any).electronAPI) {
         (window as any).electronAPI.closeApp()
       } else {
-        // Para desarrollo web, cerrar la pestaña/ventana
         window.close()
       }
     })
   }
 
+  // Función para crear un nuevo equipo
   const createNewTeam = async () => {
     if (!teamName.trim()) {
-      showCustomAlert('El nombre del equipo es obligatorio', 'warning')
-      return
-    }
-
-    if (teamName.trim().length < 2 || teamName.trim().length > 50) {
-      showCustomAlert('El nombre debe tener entre 2 y 50 caracteres', 'warning')
+      showCustomAlert('Por favor ingresa un nombre para el equipo', 'warning')
       return
     }
 
@@ -406,9 +399,10 @@ function App() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-        },        body: JSON.stringify({
+        },
+        body: JSON.stringify({
           nombre: teamName.trim(),
-          descripcion: teamDescription.trim(),
+          descripcion: teamDescription.trim() || null,
           color: teamColor
         })
       })
@@ -421,15 +415,48 @@ function App() {
       // Recargar la lista de equipos
       await loadTeams()
       
-      // Limpiar el formulario
+      // Limpiar formulario
       setTeamName('')
       setTeamDescription('')
       setTeamColor('#3B82F6')
       setShowCreateTeam(false)
       
-      showCustomAlert('Equipo creado exitosamente', 'success')    } catch (err) {
+      showCustomAlert('Equipo creado exitosamente', 'success')
+    } catch (err) {
       showCustomAlert(err instanceof Error ? err.message : 'Error al crear equipo', 'error')
     }
+  }
+
+  // Función para eliminar un equipo
+  const deleteTeam = async (teamId: number, teamName: string) => {
+    showCustomConfirm(
+      `¿Estás seguro de que quieres eliminar el equipo "${teamName}"?\n\nEsta acción no se puede deshacer.`, 
+      async () => {
+        try {
+          const response = await fetch(`${API_BASE_URL}/teams/${teamId}`, {
+            method: 'DELETE'
+          })
+
+          if (!response.ok) {
+            const errorData = await response.json()
+            throw new Error(errorData.message || 'Error al eliminar equipo')
+          }
+
+          // Recargar la lista de equipos
+          await loadTeams()
+          
+          // Si el equipo eliminado era el seleccionado, volver al menú
+          if (selectedTeam && selectedTeam.id === teamId) {
+            setSelectedTeam(null)
+            setCurrentView('menu')
+          }
+          
+          showCustomAlert('Equipo eliminado exitosamente', 'success')
+        } catch (err) {
+          showCustomAlert(err instanceof Error ? err.message : 'Error al eliminar equipo', 'error')
+        }
+      }
+    )
   }
 
   if (loading && teams.length === 0) {
@@ -477,27 +504,37 @@ function App() {
                   <span className="btn-text">Crear Nuevo Equipo</span>
                 </button>
               </div>
-              
-              <div className="teams-grid">
+                <div className="teams-grid">
                 {teams.map((team) => (
-                  <button
-                    key={team.id}
-                    onClick={() => selectTeamAndNavigate(team)}
-                    className="team-card"
-                    style={{ 
-                      // Usamos CSS variable para el color del borde izquierdo
-                      // El texto NO toma el color del equipo
-                      ['--team-color' as any]: team.color
-                    }}
-                  >
-                    <div className="team-card-content">
-                      <div className="team-name">{team.nombre}</div>
-                      {team.descripcion && (
-                        <div className="team-description">{team.descripcion}</div>
-                      )}
-                    </div>
-                    <div className="team-arrow">→</div>
-                  </button>
+                  <div key={team.id} className="team-card-container">
+                    <button
+                      onClick={() => selectTeamAndNavigate(team)}
+                      className="team-card"
+                      style={{ 
+                        // Usamos CSS variable para el color del borde izquierdo
+                        // El texto NO toma el color del equipo
+                        ['--team-color' as any]: team.color
+                      }}
+                    >
+                      <div className="team-card-content">
+                        <div className="team-name">{team.nombre}</div>
+                        {team.descripcion && (
+                          <div className="team-description">{team.descripcion}</div>
+                        )}
+                      </div>
+                      <div className="team-arrow">→</div>
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        deleteTeam(team.id, team.nombre)
+                      }}
+                      className="team-delete-btn"
+                      title={`Eliminar equipo ${team.nombre}`}
+                    >
+                      🗑️
+                    </button>
+                  </div>
                 ))}
               </div>
               
