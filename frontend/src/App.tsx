@@ -28,6 +28,40 @@ interface Child {
 
 const API_BASE_URL = 'http://localhost:3001/api'
 
+// Función helper para formatear fechas sin problemas de zona horaria
+const formatBirthDateForDisplay = (birthDate: string): string => {
+  if (!birthDate) return 'Fecha no disponible';
+  
+  // Si la fecha viene en formato YYYY-MM-DD, la parseamos de forma segura
+  if (typeof birthDate === 'string' && birthDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    const [year, month, day] = birthDate.split('-');
+    // Crear fecha local específicamente (no UTC)
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    return date.toLocaleDateString('es-ES');
+  }
+  
+  // Para otros formatos, usar conversión normal
+  const date = new Date(birthDate);
+  return date.toLocaleDateString('es-ES');
+};
+
+// Función helper para formatear fechas para inputs de tipo date
+const formatBirthDateForInput = (birthDate: string): string => {
+  if (!birthDate) return '';
+  
+  // Si la fecha viene en formato YYYY-MM-DD, devolverla tal como está
+  if (typeof birthDate === 'string' && birthDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    return birthDate;
+  }
+  
+  // Para otros formatos, convertir a YYYY-MM-DD
+  const date = new Date(birthDate);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 function App() {
   const [teams, setTeams] = useState<Team[]>([])
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null)
@@ -41,6 +75,13 @@ function App() {
   const [estadoFisico, setEstadoFisico] = useState<'En forma' | 'Lesionado'>('En forma')
   const [condicionPago, setCondicionPago] = useState<'Al dia' | 'En deuda'>('Al dia')
   const [showAddChild, setShowAddChild] = useState(false)
+  // Estados para edición de niños
+  const [editingChild, setEditingChild] = useState<Child | null>(null)
+  const [editNombre, setEditNombre] = useState('')
+  const [editApellido, setEditApellido] = useState('')
+  const [editFechaNacimiento, setEditFechaNacimiento] = useState('')
+  const [editEstadoFisico, setEditEstadoFisico] = useState<'En forma' | 'Lesionado'>('En forma')
+  const [editCondicionPago, setEditCondicionPago] = useState<'Al dia' | 'En deuda'>('Al dia')
   // Estados para modales personalizados
   const [showAlert, setShowAlert] = useState(false)
   const [alertMessage, setAlertMessage] = useState('')
@@ -202,7 +243,6 @@ function App() {
       showCustomAlert('Por favor completa todos los campos', 'warning')
     }
   }
-
   const removeChild = async (id: number) => {
     showCustomConfirm('¿Estás seguro de que quieres eliminar este niño?', async () => {
       try {
@@ -223,10 +263,107 @@ function App() {
         showCustomAlert(err instanceof Error ? err.message : 'Error al eliminar niño', 'error')
       }
     })
+  }  // Función para iniciar la edición de un niño
+  const startEditChild = (child: Child) => {
+    // Cerrar formulario de agregar si está abierto
+    setShowAddChild(false)
+    
+    setEditingChild(child)
+    setEditNombre(child.nombre)
+    setEditApellido(child.apellido)
+    setEditFechaNacimiento(formatBirthDateForInput(child.fecha_nacimiento))
+    setEditEstadoFisico(child.estado_fisico)
+    setEditCondicionPago(child.condicion_pago)
   }
+
+  // Función para cancelar la edición
+  const cancelEdit = () => {
+    setEditingChild(null)
+    setEditNombre('')
+    setEditApellido('')
+    setEditFechaNacimiento('')
+    setEditEstadoFisico('En forma')
+    setEditCondicionPago('Al dia')
+  }
+
+  // Función para guardar los cambios de edición
+  const saveEditChild = async () => {
+    if (!editingChild) return
+
+    // Validar campos obligatorios
+    if (!editNombre.trim() || !editApellido.trim() || !editFechaNacimiento.trim()) {
+      showCustomAlert('Por favor completa todos los campos obligatorios', 'warning')
+      return
+    }
+
+    // Validar fecha de nacimiento
+    const birthDate = new Date(editFechaNacimiento)
+    const today = new Date()
+    
+    if (isNaN(birthDate.getTime())) {
+      showCustomAlert('Por favor ingresa una fecha de nacimiento válida', 'warning')
+      return
+    }
+    
+    if (birthDate > today) {
+      showCustomAlert('La fecha de nacimiento no puede ser futura', 'warning')
+      return
+    }
+    
+    // Calcular edad para validación
+    const age = today.getFullYear() - birthDate.getFullYear()
+    const monthDiff = today.getMonth() - birthDate.getMonth()
+    const actualAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate()) ? age - 1 : age
+    
+    if (actualAge < 0 || actualAge > 25) {
+      showCustomAlert('La edad calculada debe estar entre 0 y 25 años', 'warning')
+      return
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/children/${editingChild.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nombre: editNombre.trim(),
+          apellido: editApellido.trim(),
+          fecha_nacimiento: editFechaNacimiento,
+          estado_fisico: editEstadoFisico,
+          condicion_pago: editCondicionPago,
+          team_id: editingChild.team_id
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Error al actualizar niño')
+      }
+
+      // Recargar la lista de niños
+      if (selectedTeam) {
+        await loadChildren(selectedTeam.id)
+      }
+      
+      // Limpiar estado de edición
+      cancelEdit()
+      showCustomAlert('Niño actualizado exitosamente', 'success')    } catch (err) {
+      showCustomAlert(err instanceof Error ? err.message : 'Error al actualizar niño', 'error')
+    }
+  }
+  
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       addChild()
+    }
+  }
+
+  const handleEditKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      saveEditChild()
+    } else if (e.key === 'Escape') {
+      cancelEdit()
     }
   }
   const selectTeamAndNavigate = (team: Team) => {
@@ -450,9 +587,14 @@ function App() {
                     {selectedTeam.descripcion && (
                       <p className="team-description">{selectedTeam.descripcion}</p>
                     )}
-                  </div>
-                  <button 
-                    onClick={() => setShowAddChild(!showAddChild)}
+                  </div>                  <button 
+                    onClick={() => {
+                      setShowAddChild(!showAddChild)
+                      // Cancelar edición si está activa
+                      if (editingChild) {
+                        cancelEdit()
+                      }
+                    }}
                     className="add-child-btn"
                     style={{ backgroundColor: selectedTeam.color }}
                   >
@@ -551,35 +693,123 @@ function App() {
                     <>
                       <div className="list-header">
                         <h3>Niños en el equipo ({children.length})</h3>
-                      </div>
-                      <ul className="children-list">
+                      </div>                      <ul className="children-list">
                         {children.map((child) => (
-                          <li key={child.id} className="child-item">                            <div className="child-info">
-                              <span className="child-name">
-                                {child.nombre} {child.apellido}
-                              </span>
-                              <span className="child-age">
-                                {child.edad !== undefined ? `${child.edad} años` : 'Edad no disponible'}
-                              </span>
-                              <span className="child-birth-date">
-                                Nació: {new Date(child.fecha_nacimiento).toLocaleDateString('es-ES')}
-                              </span>
-                              <div className="child-status">
-                                <span className={`status-badge status-fisico ${child.estado_fisico?.toLowerCase().replace(' ', '-')}`}>
-                                  {child.estado_fisico === 'En forma' ? '💪' : '🤕'} {child.estado_fisico || 'En forma'}
-                                </span>
-                                <span className={`status-badge status-pago ${child.condicion_pago?.toLowerCase().replace(' ', '-')}`}>
-                                  {child.condicion_pago === 'Al dia' ? '✅' : '⚠️'} {child.condicion_pago || 'Al día'}
-                                </span>
+                          <li key={child.id} className="child-item">
+                            {editingChild && editingChild.id === child.id ? (
+                              // Formulario de edición en línea
+                              <div className="edit-child-form">
+                                <div className="edit-input-group">
+                                  <div className="edit-input-container">
+                                    <label className="edit-input-label">Nombre</label>                                    <input
+                                      type="text"
+                                      value={editNombre}
+                                      onChange={(e) => setEditNombre(e.target.value)}
+                                      onKeyDown={handleEditKeyPress}
+                                      className="edit-input-field"
+                                      placeholder="Nombre"
+                                      maxLength={50}
+                                    />
+                                  </div>
+                                  <div className="edit-input-container">
+                                    <label className="edit-input-label">Apellido</label>
+                                    <input
+                                      type="text"
+                                      value={editApellido}
+                                      onChange={(e) => setEditApellido(e.target.value)}
+                                      className="edit-input-field"
+                                      placeholder="Apellido"
+                                      maxLength={50}
+                                    />
+                                  </div>
+                                  <div className="edit-input-container">
+                                    <label className="edit-input-label">Fecha Nacimiento</label>
+                                    <input
+                                      type="date"
+                                      value={editFechaNacimiento}
+                                      onChange={(e) => setEditFechaNacimiento(e.target.value)}
+                                      className="edit-input-field edit-input-date"
+                                      max={new Date().toISOString().split('T')[0]}
+                                    />
+                                  </div>
+                                  <div className="edit-input-container">
+                                    <label className="edit-input-label">Estado Físico</label>
+                                    <select
+                                      value={editEstadoFisico}
+                                      onChange={(e) => setEditEstadoFisico(e.target.value as 'En forma' | 'Lesionado')}
+                                      className="edit-input-field edit-select-field"
+                                    >
+                                      <option value="En forma">💪 En forma</option>
+                                      <option value="Lesionado">🤕 Lesionado</option>
+                                    </select>
+                                  </div>
+                                  <div className="edit-input-container">
+                                    <label className="edit-input-label">Condición Pago</label>
+                                    <select
+                                      value={editCondicionPago}
+                                      onChange={(e) => setEditCondicionPago(e.target.value as 'Al dia' | 'En deuda')}
+                                      className="edit-input-field edit-select-field"
+                                    >
+                                      <option value="Al dia">✅ Al día</option>
+                                      <option value="En deuda">⚠️ En deuda</option>
+                                    </select>
+                                  </div>
+                                </div>
+                                <div className="edit-actions">
+                                  <button 
+                                    onClick={saveEditChild}
+                                    className="save-btn"
+                                    style={{ backgroundColor: selectedTeam.color }}
+                                  >
+                                    💾 Guardar
+                                  </button>
+                                  <button 
+                                    onClick={cancelEdit}
+                                    className="cancel-edit-btn"
+                                  >
+                                    ❌ Cancelar
+                                  </button>
+                                </div>
                               </div>
-                            </div>
-                            <button 
-                              onClick={() => removeChild(child.id)}
-                              className="remove-btn"
-                              title="Eliminar"
-                            >
-                              ❌
-                            </button>
+                            ) : (
+                              // Vista normal del niño
+                              <>
+                                <div className="child-info">
+                                  <span className="child-name">
+                                    {child.nombre} {child.apellido}
+                                  </span>
+                                  <span className="child-age">
+                                    {child.edad !== undefined ? `${child.edad} años` : 'Edad no disponible'}
+                                  </span>                                  <span className="child-birth-date">
+                                    Nació: {formatBirthDateForDisplay(child.fecha_nacimiento)}
+                                  </span>
+                                  <div className="child-status">
+                                    <span className={`status-badge status-fisico ${child.estado_fisico?.toLowerCase().replace(' ', '-')}`}>
+                                      {child.estado_fisico === 'En forma' ? '💪' : '🤕'} {child.estado_fisico || 'En forma'}
+                                    </span>
+                                    <span className={`status-badge status-pago ${child.condicion_pago?.toLowerCase().replace(' ', '-')}`}>
+                                      {child.condicion_pago === 'Al dia' ? '✅' : '⚠️'} {child.condicion_pago || 'Al día'}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="child-actions">
+                                  <button 
+                                    onClick={() => startEditChild(child)}
+                                    className="edit-btn"
+                                    title="Editar"
+                                  >
+                                    ✏️
+                                  </button>
+                                  <button 
+                                    onClick={() => removeChild(child.id)}
+                                    className="remove-btn"
+                                    title="Eliminar"
+                                  >
+                                    ❌
+                                  </button>
+                                </div>
+                              </>
+                            )}
                           </li>
                         ))}
                       </ul>

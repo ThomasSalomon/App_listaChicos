@@ -85,6 +85,46 @@ const formatBirthDateForDB = (birthDate) => {
 };
 
 /**
+ * Formatea fecha desde la base de datos para visualización sin problemas de zona horaria
+ * Evita el problema de que JavaScript interprete fechas YYYY-MM-DD como UTC
+ */
+const formatBirthDateForDisplay = (birthDate) => {
+  if (!birthDate) return 'Fecha no disponible';
+  
+  // Si la fecha viene en formato YYYY-MM-DD, la parseamos de forma segura
+  if (typeof birthDate === 'string' && birthDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    const [year, month, day] = birthDate.split('-');
+    // Crear fecha local específicamente (no UTC)
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    return date.toLocaleDateString('es-ES');
+  }
+  
+  // Para otros formatos, usar conversión normal
+  const date = new Date(birthDate);
+  return date.toLocaleDateString('es-ES');
+};
+
+/**
+ * Convierte fecha desde formato de input (YYYY-MM-DD) para uso en formularios de edición
+ * Evita problemas de zona horaria en formularios
+ */
+const formatBirthDateForInput = (birthDate) => {
+  if (!birthDate) return '';
+  
+  // Si la fecha viene en formato YYYY-MM-DD, devolverla tal como está
+  if (typeof birthDate === 'string' && birthDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    return birthDate;
+  }
+  
+  // Para otros formatos, convertir a YYYY-MM-DD
+  const date = new Date(birthDate);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+/**
  * Valida si una edad es válida para niños
  */
 const isValidChildAge = (age) => {
@@ -211,6 +251,8 @@ module.exports = {
   calculateAge,
   isValidBirthDate,
   formatBirthDateForDB,
+  formatBirthDateForDisplay,
+  formatBirthDateForInput,
   isValidChildAge,
   capitalizeWords,
   sanitizeString,

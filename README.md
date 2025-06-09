@@ -22,6 +22,12 @@ Una aplicación de escritorio moderna para gestionar listas de niños, construid
   - ✅ "Al día" - Pagos actualizados sin pendientes
   - ⚠️ "En deuda" - Pagos pendientes que requieren atención
 - 🏷️ **Etiquetas de Estado**: Badges visuales con iconos y colores para identificación rápida
+- ✏️ **Edición In-Situ**: Sistema completo de edición de niños existentes
+  - 📝 Edición en línea sin ventanas emergentes
+  - 🔄 Actualización de todos los campos (nombre, apellido, fecha nacimiento, estado físico, condición pago)
+  - ⌨️ Atajos de teclado (Enter para guardar, Escape para cancelar)
+  - 🚫 Exclusividad mutua entre agregar y editar
+  - ✅ Validación completa igual que en formulario de agregar
 - 📝 **Validación Inteligente**: 
   - Fechas futuras no permitidas
   - Validación de edad entre 0-25 años
@@ -189,7 +195,7 @@ Lista-de-Chicos/
 - `DELETE /api/teams/:id` - Eliminar equipo
 - `GET /api/children` - Obtener todos los niños (con edad calculada)
 - `POST /api/children` - Agregar nuevo niño (requiere fecha_nacimiento)
-- `PUT /api/children/:id` - Actualizar niño existente
+- `PUT /api/children/:id` - **Actualizar niño existente** (nombre, apellido, fecha_nacimiento, estado_fisico, condicion_pago)
 - `DELETE /api/children/:id` - Eliminar niño
 - `GET /api/teams/:id/children` - Obtener niños de un equipo específico
 
@@ -254,13 +260,28 @@ CREATE TABLE children (
      - **Condición de Pago**: Selecciona entre "✅ Al día" o "⚠️ En deuda"
    - La edad se calcula automáticamente
    - Presiona "Agregar" para guardar
-2. **Ver información**: Cada niño muestra:
+2. **Editar un niño existente**: 
+   - Haz clic en el botón de editar (✏️) junto al nombre del niño
+   - Se abre un formulario de edición en línea con todos los datos actuales
+   - Modifica los campos que desees:
+     - **Nombre y Apellido**: Edita directamente en los campos de texto
+     - **Fecha de Nacimiento**: Cambia la fecha usando el selector de fecha
+     - **Estado Físico**: Selecciona entre las opciones disponibles
+     - **Condición de Pago**: Actualiza el estado de pagos
+   - **Guardar cambios**: 
+     - Presiona el botón guardar (💾) o usa Enter
+     - Los cambios se validan antes de guardarse
+   - **Cancelar edición**: 
+     - Presiona el botón cancelar (❌) o usa Escape
+     - Se descartan todos los cambios no guardados
+   - **Nota**: No puedes agregar nuevos niños mientras editas uno existente
+3. **Ver información**: Cada niño muestra:
    - Nombre completo y edad actual
    - Fecha de nacimiento formateada
    - Estado físico con badge visual e icono
    - Condición de pago con badge visual e icono
-3. **Eliminar un niño**: Haz clic en el botón ❌ junto al nombre con confirmación de seguridad
-4. **Actualización automática**: Las edades se actualizan automáticamente en tiempo real
+4. **Eliminar un niño**: Haz clic en el botón ❌ junto al nombre con confirmación de seguridad
+5. **Actualización automática**: Las edades se actualizan automáticamente en tiempo real
 
 ### Cerrar la Aplicación
 1. **Botón de Salir**: Ubicado en la parte inferior del menú principal
@@ -268,6 +289,31 @@ CREATE TABLE children (
 3. **Cierre Automático**: Confirma para cerrar la aplicación de forma segura
 
 ## 🔄 Historial de Versiones
+
+### v3.2 (Junio 2025) - "Sistema de Edición In-Situ"
+**🎯 Nueva Funcionalidad**: Sistema completo de edición de niños existentes sin ventanas emergentes
+
+**🔧 Cambios Principales**:
+- ✅ **Edición In-Línea**: Formulario de edición que reemplaza la vista del niño durante la edición
+- ✅ **Actualización Completa**: Permite editar todos los campos (nombre, apellido, fecha nacimiento, estado físico, condición pago)
+- ✅ **Atajos de Teclado**: Enter para guardar, Escape para cancelar
+- ✅ **Exclusividad Mutua**: No se puede agregar nuevos niños mientras se edita uno existente
+- ✅ **Validación Completa**: Mismas validaciones que el formulario de agregar
+- ✅ **Persistencia Backend**: Utiliza endpoint PUT `/api/children/:id` existente
+
+**🚀 Funcionalidades Nuevas**:
+- ✏️ Botón de editar (✏️) junto a cada niño
+- 📝 Formulario inline con todos los campos editables
+- 💾 Botón guardar con validación completa
+- ❌ Botón cancelar que descarta cambios
+- ⌨️ Navegación por teclado (Enter/Escape)
+- 🔄 Actualización inmediata de la lista tras guardar
+
+**🛠️ Cambios Técnicos**:
+- `frontend/src/App.tsx` - Estados y funciones para edición: `editingChild`, `startEditChild()`, `cancelEdit()`, `saveEditChild()`
+- `frontend/src/App.css` - Estilos para formulario de edición: `.edit-child-form`, `.edit-input-group`, `.save-btn`, `.cancel-edit-btn`
+- Reutilización del controlador `updateChild` existente en backend
+- Manejo de estados mutuamente exclusivos entre agregar y editar
 
 ### v3.1 (Junio 2025) - "Estado Físico y Condición de Pago"
 **🎯 Nueva Funcionalidad**: Sistema completo de seguimiento de estado físico y pagos
@@ -391,6 +437,23 @@ cd backend/utils
 - ✅ Verificar versión v3.1 o superior
 - ✅ Comprobar que los campos de estado físico y condición de pago estén disponibles
 - ✅ Verificar que los selects muestren las opciones correctas
+
+#### "No puedo editar niños existentes"
+- ✅ Verificar versión v3.2 o superior
+- ✅ Buscar el botón de editar (✏️) junto a cada niño
+- ✅ Comprobar que no esté activo el modo "agregar niño"
+- ✅ Verificar que el formulario de edición aparezca en línea
+
+#### "Los cambios de edición no se guardan"
+- ✅ Verificar conexión con backend (PUT /api/children/:id)
+- ✅ Comprobar validación de campos (todos los campos son obligatorios)
+- ✅ Usar el botón guardar (💾) o presionar Enter
+- ✅ Verificar que no haya errores en el formulario
+
+#### "El formulario de edición no se cancela correctamente"
+- ✅ Usar el botón cancelar (❌) o presionar Escape
+- ✅ Verificar que el estado se restablezca a la vista normal
+- ✅ Comprobar que los campos se limpien correctamente
 
 #### "Badges de estado no se muestran correctamente"
 - ✅ Verificar que los datos incluyan estado_fisico y condicion_pago
