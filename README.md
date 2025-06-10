@@ -67,6 +67,14 @@ Puedes subir el frontend a Netlify, Vercel, GitHub Pages, etc. Solo necesitas su
   - ⌨️ Atajos de teclado (Enter para guardar, Escape para cancelar)
   - 🚫 Exclusividad mutua entre agregar y editar
   - ✅ Validación completa igual que en formulario de agregar
+- ↔️ **Mover Entre Equipos**: Sistema completo para transferir niños entre equipos
+  - 🔄 **Transferencia Inteligente**: Modal intuitivo para seleccionar equipo destino
+  - 🎨 **Selector Visual**: Radio buttons con indicadores de color de cada equipo
+  - 🛡️ **Validación Completa**: Verificación de existencia de niño y equipo destino
+  - 🚫 **Prevención de Errores**: No permite mover al mismo equipo actual
+  - ✅ **Confirmación Visual**: Mensaje de éxito con nombres de equipos involucrados
+  - 🔒 **Integridad de Datos**: Mantiene toda la información del niño intacta
+  - ⚡ **Actualización Inmediata**: La interfaz se actualiza automáticamente tras el movimiento
 - 📝 **Validación Inteligente**: 
   - Fechas futuras no permitidas
   - Validación de edad entre 0-25 años
@@ -235,6 +243,7 @@ Lista-de-Chicos/
 - `GET /api/children` - Obtener todos los niños (con edad calculada)
 - `POST /api/children` - Agregar nuevo niño (requiere fecha_nacimiento)
 - `PUT /api/children/:id` - **Actualizar niño existente** (nombre, apellido, fecha_nacimiento, estado_fisico, condicion_pago)
+- `PUT /api/children/:id/move` - **🆕 Mover niño a otro equipo** (requiere new_team_id, implementado en v3.4)
 - `DELETE /api/children/:id` - Eliminar niño
 - `GET /api/teams/:id/children` - Obtener niños de un equipo específico
 
@@ -325,7 +334,20 @@ CREATE TABLE children (
      - Presiona el botón cancelar (❌) o usa Escape
      - Se descartan todos los cambios no guardados
    - **Nota**: No puedes agregar nuevos niños mientras editas uno existente
-3. **Ver información**: Cada niño muestra:
+3. **Mover un niño a otro equipo**: 
+   - Haz clic en el botón de mover (↔️) junto al nombre del niño
+   - Se abre un modal con la lista de equipos disponibles
+   - Selecciona el equipo destino usando los radio buttons
+   - Cada equipo muestra su color característico para fácil identificación
+   - **Validaciones automáticas**:
+     - 🚫 No aparece el equipo actual (no se puede mover al mismo equipo)
+     - ✅ Solo muestra equipos activos y disponibles
+   - Presiona "Mover" para confirmar la transferencia
+   - **Resultado**: 
+     - ✅ Mensaje de confirmación con nombres de equipos involucrados
+     - 🔄 La interfaz se actualiza automáticamente
+     - 💾 Toda la información del niño se mantiene intacta
+4. **Ver información**: Cada niño muestra:
    - Nombre completo y edad actual
    - Fecha de nacimiento formateada
    - Estado físico con badge visual e icono
@@ -339,6 +361,32 @@ CREATE TABLE children (
 3. **Cierre Automático**: Confirma para cerrar la aplicación de forma segura
 
 ## 🔄 Historial de Versiones
+
+### v3.4 (Junio 2025) - "Transferencia Entre Equipos"
+**🎯 Nueva Funcionalidad**: Sistema completo para mover niños entre equipos de forma intuitiva y segura
+
+**🔧 Cambios Principales**:
+- ✅ **Botón de Mover**: Nuevo botón ↔️ junto a cada niño para transferir entre equipos
+- ✅ **Modal Intuitivo**: Interfaz modal elegante para seleccionar equipo destino
+- ✅ **Selector Visual**: Radio buttons con indicadores de color de cada equipo
+- ✅ **Validación Completa**: Verificación de existencia de niño y equipo destino en backend
+- ✅ **Prevención de Errores**: No permite mover al mismo equipo actual
+- ✅ **Confirmación Visual**: Mensaje de éxito con nombres de equipos involucrados
+- ✅ **Integridad de Datos**: Mantiene toda la información del niño durante la transferencia
+
+**🚀 Funcionalidades Nuevas**:
+- ↔️ Transferencia de niños entre equipos con un clic
+- 🎨 Modal con diseño glassmorphism consistente con la aplicación
+- 🔄 Actualización automática de la interfaz tras el movimiento
+- 🛡️ Sistema robusto de validaciones en frontend y backend
+- ⚡ Operación rápida sin pérdida de datos
+
+**🛠️ Cambios Técnicos**:
+- `frontend/src/App.tsx` - Estados `showMoveChild`, `childToMove`, `targetTeamId` y funciones `moveChildToTeam()`, `startMoveChild()`
+- `frontend/src/App.css` - Estilos para `.move-child-modal`, `.team-option`, `.move-buttons`
+- `backend/controllers/childrenController.js` - Nuevo método `moveChildToTeam()` con validaciones completas
+- `backend/routes/children.js` - Nueva ruta `PUT /api/children/:id/move` con middleware de validación
+- `backend/models/Teams.js` - Corrección en eliminación: cambio a hard delete para prevenir conflictos de nombres
 
 ### v3.3 (Junio 2025) - "Eliminación Segura de Equipos"
 **🎯 Nueva Funcionalidad**: Sistema completo para eliminar equipos con protecciones de seguridad

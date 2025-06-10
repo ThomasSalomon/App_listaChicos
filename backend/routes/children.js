@@ -58,4 +58,10 @@ router.delete('/', asyncHandler(ChildrenController.deleteAllChildren));
  */
 router.get('/health/check', ChildrenController.healthCheck);
 
+/**
+ * PUT /api/children/:id/move
+ * Mueve un niño a otro equipo
+ */
+router.put('/:id/move', validateId, asyncHandler(ChildrenController.moveChildToTeam));
+
 module.exports = router;

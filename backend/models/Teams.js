@@ -35,14 +35,13 @@ class TeamsModel {
       });
     });
   }
-
   // Crear un nuevo equipo
   static create(teamData) {
     return new Promise((resolve, reject) => {
       const { nombre, descripcion, color } = teamData;
-      const sql = 'INSERT INTO teams (nombre, descripcion, color) VALUES (?, ?, ?)';
+      const sql = 'INSERT INTO teams (nombre, descripcion, color, activo, created_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)';
       
-      database.getDB().run(sql, [nombre.trim(), descripcion?.trim() || '', color || '#3B82F6'], function(err) {
+      database.getDB().run(sql, [nombre.trim(), descripcion?.trim() || '', color || '#3B82F6', 1], function(err) {
         if (err) {
           reject(err);
         } else {
@@ -82,8 +81,7 @@ class TeamsModel {
       });
     });
   }
-
-  // Eliminar un equipo (soft delete)
+  // Eliminar un equipo (hard delete)
   static delete(id) {
     return new Promise((resolve, reject) => {
       // Verificar si hay niños en este equipo
@@ -100,8 +98,8 @@ class TeamsModel {
           return;
         }
 
-        // Si no hay niños, proceder con el soft delete
-        const sql = 'UPDATE teams SET activo = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?';
+        // Si no hay niños, proceder con la eliminación física
+        const sql = 'DELETE FROM teams WHERE id = ?';
         
         database.getDB().run(sql, [id], function(err) {
           if (err) {

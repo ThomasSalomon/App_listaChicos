@@ -96,6 +96,11 @@ function App() {
   const [teamDescription, setTeamDescription] = useState('')
   const [teamColor, setTeamColor] = useState('#3B82F6')
 
+  // Estados para mover niños entre equipos
+  const [showMoveChild, setShowMoveChild] = useState(false)
+  const [childToMove, setChildToMove] = useState<Child | null>(null)
+  const [targetTeamId, setTargetTeamId] = useState<number | ''>('')
+
   // Funciones auxiliares para modales
   const showCustomAlert = (message: string, type: 'info' | 'error' | 'success' | 'warning' = 'info') => {
     setAlertMessage(message)
@@ -454,6 +459,54 @@ function App() {
         }
       }
     )
+  }
+  // Función para mover un niño a otro equipo
+  const moveChildToTeam = async () => {
+    if (!childToMove || targetTeamId === '') return
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/children/${childToMove.id}/move`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          new_team_id: targetTeamId
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Error al mover niño')
+      }
+
+      const result = await response.json()
+
+      // Recargar la lista de niños del equipo actual
+      if (selectedTeam) {
+        await loadChildren(selectedTeam.id)
+      }
+      
+      showCustomAlert(result.message || 'Niño movido exitosamente', 'success')
+    } catch (err) {
+      showCustomAlert(err instanceof Error ? err.message : 'Error al mover niño', 'error')
+    } finally {
+      setShowMoveChild(false)
+      setChildToMove(null)
+      setTargetTeamId('')
+    }
+  }
+
+  // Función para iniciar el proceso de mover un niño
+  const startMoveChild = (child: Child) => {
+    setChildToMove(child)
+    setTargetTeamId('')
+    setShowMoveChild(true)
+    // Cerrar otros formularios
+    setShowAddChild(false)
+    if (editingChild) {
+      cancelEdit()
+    }
   }
 
   if (loading && teams.length === 0) {
@@ -840,6 +893,12 @@ function App() {
                                     title="Eliminar"
                                   >
                                     ❌
+                                  </button>                                  <button 
+                                    onClick={() => startMoveChild(child)}
+                                    className="move-btn"
+                                    title="Mover a otro equipo"
+                                  >
+                                    ↔️
                                   </button>
                                 </div>
                               </>
@@ -881,6 +940,57 @@ function App() {
               <div className="confirm-buttons">
                 <button onClick={handleConfirmAccept} className="confirm-accept">Sí</button>
                 <button onClick={handleConfirmCancel} className="confirm-cancel">No</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal para mover niño entre equipos */}
+        {showMoveChild && childToMove && (
+          <div className="custom-modal move-child">
+            <div className="modal-content">
+              <span className="close" onClick={() => setShowMoveChild(false)}>&times;</span>
+              <h3>Mover Niño a Otro Equipo</h3>
+              <p>
+                Estás moviendo a <strong>{childToMove.nombre} {childToMove.apellido}</strong>.
+                Selecciona el equipo destino:
+              </p>
+              
+              <div className="move-child-teams">
+                {teams.filter(team => team.id !== selectedTeam?.id).map(team => (
+                  <div key={team.id} className="team-option">
+                    <input
+                      type="radio"
+                      id={`team-${team.id}`}
+                      name="targetTeam"
+                      value={team.id}
+                      checked={targetTeamId === team.id}
+                      onChange={(e) => setTargetTeamId(Number(e.target.value))}
+                      className="team-radio"
+                    />
+                    <label htmlFor={`team-${team.id}`} className="team-label">
+                      <span className="team-color-box" style={{ backgroundColor: team.color }}></span>
+                      {team.nombre}
+                    </label>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="move-child-actions">
+                <button 
+                  onClick={moveChildToTeam}
+                  className="move-btn-confirm"
+                  disabled={!targetTeamId}
+                  style={{ backgroundColor: targetTeamId ? teams.find(team => team.id === targetTeamId)?.color : '#ccc' }}
+                >
+                  ✅ Mover Niño
+                </button>
+                <button 
+                  onClick={() => setShowMoveChild(false)}
+                  className="move-btn-cancel"
+                >
+                  ❌ Cancelar
+                </button>
               </div>
             </div>
           </div>

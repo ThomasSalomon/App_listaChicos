@@ -328,6 +328,92 @@ class ChildrenController {
       timestamp: new Date().toISOString()
     });
   }
+
+  /**
+   * Mover un niño a otro equipo
+   */
+  static async moveChildToTeam(req, res) {
+    try {
+      const { id } = req.params;
+      const { new_team_id } = req.body;
+      
+      // Validar ID del niño
+      if (!id || isNaN(parseInt(id))) {
+        return res.status(400).json({ 
+          error: 'ID inválido',
+          message: 'El ID del niño debe ser un número válido'
+        });
+      }
+
+      // Validar nuevo team_id
+      if (!new_team_id || isNaN(parseInt(new_team_id)) || parseInt(new_team_id) <= 0) {
+        return res.status(400).json({ 
+          error: 'Team ID inválido',
+          message: 'El ID del nuevo equipo debe ser un número válido mayor a 0'
+        });
+      }
+
+      // Verificar que el niño existe
+      const existingChild = await ChildrenModel.getById(parseInt(id));
+      if (!existingChild) {
+        return res.status(404).json({ 
+          error: 'Niño no encontrado',
+          message: `No se encontró un niño con ID: ${id}`
+        });
+      }
+
+      // Verificar que el nuevo equipo existe (importar TeamsModel si es necesario)
+      const TeamsModel = require('../models/Teams');
+      const targetTeam = await TeamsModel.getById(parseInt(new_team_id));
+      if (!targetTeam) {
+        return res.status(404).json({ 
+          error: 'Equipo destino no encontrado',
+          message: `No se encontró un equipo con ID: ${new_team_id}`
+        });
+      }
+
+      // Verificar que no se esté moviendo al mismo equipo
+      if (existingChild.team_id === parseInt(new_team_id)) {
+        return res.status(400).json({ 
+          error: 'Movimiento innecesario',
+          message: 'El niño ya pertenece a ese equipo'
+        });
+      }
+
+      // Actualizar solo el team_id
+      const childData = {
+        nombre: existingChild.nombre,
+        apellido: existingChild.apellido,
+        fecha_nacimiento: existingChild.fecha_nacimiento,
+        estado_fisico: existingChild.estado_fisico,
+        condicion_pago: existingChild.condicion_pago,
+        team_id: parseInt(new_team_id)
+      };
+
+      const updatedChild = await ChildrenModel.update(parseInt(id), childData);
+      
+      if (!updatedChild) {
+        return res.status(500).json({ 
+          error: 'Error al mover niño',
+          message: 'No se pudo actualizar la información del niño'
+        });
+      }
+
+      res.json({
+        ...updatedChild,
+        message: `${existingChild.nombre} ${existingChild.apellido} fue movido exitosamente a ${targetTeam.nombre}`,
+        previous_team_id: existingChild.team_id,
+        new_team_id: parseInt(new_team_id),
+        target_team_name: targetTeam.nombre
+      });
+    } catch (error) {
+      console.error('Error al mover niño a otro equipo:', error.message);
+      res.status(500).json({ 
+        error: 'Error interno del servidor',
+        message: 'No se pudo mover el niño al nuevo equipo'
+      });
+    }
+  }
 }
 
 module.exports = ChildrenController;
