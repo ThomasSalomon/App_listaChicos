@@ -74,16 +74,31 @@ class TeamsController {
 
   /**
    * Crear un nuevo equipo
-   */
-  static async createTeam(req, res) {
+   */  static async createTeam(req, res) {
     try {
       const { nombre, descripcion, color } = req.body;
+      
+      // Debug: log de los valores recibidos
+      console.log('Datos recibidos para crear equipo:', { nombre, descripcion, color });
+      console.log('Tipos:', { 
+        nombreType: typeof nombre, 
+        descripcionType: typeof descripcion, 
+        colorType: typeof color 
+      });
       
       // Validaciones básicas
       if (!nombre) {
         return res.status(400).json({ 
           error: 'Nombre requerido',
           message: 'El nombre del equipo es obligatorio'
+        });
+      }
+
+      // Validar que nombre sea string antes de hacer trim
+      if (typeof nombre !== 'string') {
+        return res.status(400).json({ 
+          error: 'Nombre inválido',
+          message: 'El nombre debe ser una cadena de texto'
         });
       }
 
@@ -113,9 +128,11 @@ class TeamsController {
 
       const teamData = {
         nombre: nombre.trim(),
-        descripcion: descripcion?.trim() || '',
+        descripcion: descripcion ? descripcion.trim() : '',
         color: color || '#3B82F6'
       };
+
+      console.log('TeamData preparado:', teamData);
 
       const newTeam = await TeamsModel.create(teamData);
       

@@ -318,9 +318,7 @@ function App() {
     if (actualAge < 0 || actualAge > 25) {
       showCustomAlert('La edad calculada debe estar entre 0 y 25 años', 'warning')
       return
-    }
-
-    try {
+    }    try {
       const response = await fetch(`${API_BASE_URL}/children/${editingChild.id}`, {
         method: 'PUT',
         headers: {
@@ -332,7 +330,7 @@ function App() {
           fecha_nacimiento: editFechaNacimiento,
           estado_fisico: editEstadoFisico,
           condicion_pago: editCondicionPago,
-          team_id: editingChild.team_id
+          team_id: selectedTeam?.id || editingChild.team_id
         })
       })
 
@@ -399,10 +397,9 @@ function App() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+        },        body: JSON.stringify({
           nombre: teamName.trim(),
-          descripcion: teamDescription.trim() || null,
+          descripcion: teamDescription.trim() || '',
           color: teamColor
         })
       })

@@ -148,7 +148,7 @@ class ChildrenController {
    */  static async updateChild(req, res) {
     try {
       const { id } = req.params;
-      const { nombre, apellido, fecha_nacimiento, estado_fisico, condicion_pago } = req.body;
+      const { nombre, apellido, fecha_nacimiento, estado_fisico, condicion_pago, team_id } = req.body;
       
       // Validar ID
       if (!id || isNaN(parseInt(id))) {
@@ -190,6 +190,14 @@ class ChildrenController {
         });
       }
 
+      // Validar team_id si se proporciona
+      if (team_id && (isNaN(parseInt(team_id)) || parseInt(team_id) <= 0)) {
+        return res.status(400).json({ 
+          error: 'Team ID inválido',
+          message: 'El ID del equipo debe ser un número válido mayor a 0'
+        });
+      }
+
       // Validar valores de los nuevos campos
       if (estado_fisico && !['En forma', 'Lesionado'].includes(estado_fisico)) {
         return res.status(400).json({ 
@@ -210,7 +218,8 @@ class ChildrenController {
         apellido: apellido.trim(),
         fecha_nacimiento: fecha_nacimiento,
         estado_fisico: estado_fisico || 'En forma',
-        condicion_pago: condicion_pago || 'Al dia'
+        condicion_pago: condicion_pago || 'Al dia',
+        team_id: team_id ? parseInt(team_id) : undefined
       };
 
       const updatedChild = await ChildrenModel.update(parseInt(id), childData);
