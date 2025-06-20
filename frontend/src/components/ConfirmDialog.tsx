@@ -25,12 +25,13 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         <div className="dialog-content">
           <p>{message}</p>
         </div>
-        
-        <div className="dialog-buttons">
-          <button onClick={onConfirm} className="confirm-btn">
+          <div className="dialog-buttons">
+          <button onClick={onConfirm} className="confirm-btn btn btn-success">
+            <i className="bi bi-check-lg me-2"></i>
             Confirmar
           </button>
-          <button onClick={onCancel} className="cancel-btn">
+          <button onClick={onCancel} className="cancel-btn btn btn-secondary">
+            <i className="bi bi-x-lg me-2"></i>
             Cancelar
           </button>
         </div>
