@@ -38,8 +38,14 @@ const ChildList: React.FC<ChildListProps> = ({
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [childToMove, setChildToMove] = useState<Child | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [childToDelete, setChildToDelete] = useState<number | null>(null);
-  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [childToDelete, setChildToDelete] = useState<number | null>(null);  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Filtrar niños basado en el término de búsqueda
+  const filteredChildren = children.filter(child =>
+    child.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    child.apellido.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleAddChild = (childData: any) => {
     onAddChild(childData);
@@ -120,10 +126,9 @@ const ChildList: React.FC<ChildListProps> = ({
           </h2>
           {team.descripcion && <p>{team.descripcion}</p>}
         </div>
-      </div>
-
-      <div className="children-content">
-        <div className="children-controls">          <button 
+      </div>      <div className="children-content">
+        <div className="children-controls">
+          <button 
             onClick={() => setShowForm(!showForm)} 
             className="add-child-btn btn"
             disabled={editingChild !== null}
@@ -141,23 +146,60 @@ const ChildList: React.FC<ChildListProps> = ({
           
           <div className="children-count">
             Total: {children.length} niño{children.length !== 1 ? 's' : ''}
+            {searchTerm && (
+              <span className="filtered-count">
+                {' '} - Mostrando: {filteredChildren.length}
+              </span>
+            )}
           </div>
         </div>
+
+        {/* Campo de búsqueda */}
+        {children.length > 0 && (
+          <div className="search-container">
+            <div className="search-box">
+              <i className="bi bi-search search-icon"></i>
+              <input
+                type="text"
+                placeholder="Buscar niños por nombre o apellido..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="clear-search-btn"
+                  title="Limpiar búsqueda"
+                >
+                  <i className="bi bi-x-circle-fill"></i>
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         <ChildForm 
           teamId={team.id}
           onSubmit={handleAddChild}
           isVisible={showForm}
-        />
-
-        <div className="children-list">
-          {children.length === 0 ? (
+        />        <div className="children-list">
+          {filteredChildren.length === 0 ? (
             <div className="empty-state">
-              <p>No hay niños en este equipo</p>
-              <p>Usa el botón "Agregar Niño" para comenzar</p>
+              {searchTerm ? (
+                <>
+                  <p>No se encontraron niños que coincidan con "{searchTerm}"</p>
+                  <p>Intenta con otro término de búsqueda</p>
+                </>
+              ) : (
+                <>
+                  <p>No hay niños en este equipo</p>
+                  <p>Usa el botón "Agregar Niño" para comenzar</p>
+                </>
+              )}
             </div>
           ) : (
-            children.map(child => (
+            filteredChildren.map(child => (
               <ChildItem
                 key={child.id}
                 child={child}
