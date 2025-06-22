@@ -3,71 +3,87 @@
  * Formulario para agregar nuevos niños a un equipo
  */
 
-import React, { useState } from 'react';
+import React from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import type { ChildFormProps } from '../types';
 
+interface ChildFormData {
+  nombre: string;
+  apellido: string;
+  fecha_nacimiento: Date | null;
+  estado_fisico: 'En forma' | 'Lesionado';
+  condicion_pago: 'Al dia' | 'En deuda';
+}
+
 const ChildForm: React.FC<ChildFormProps> = ({ teamId, onSubmit, isVisible }) => {
-  const [nombre, setNombre] = useState('');
-  const [apellido, setApellido] = useState('');
-  const [fechaNacimiento, setFechaNacimiento] = useState('');
-  const [estadoFisico, setEstadoFisico] = useState<'En forma' | 'Lesionado'>('En forma');
-  const [condicionPago, setCondicionPago] = useState<'Al dia' | 'En deuda'>('Al dia');
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!nombre.trim() || !apellido.trim() || !fechaNacimiento) {
-      alert('Nombre, apellido y fecha de nacimiento son obligatorios');
-      return;
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+    control
+  } = useForm<ChildFormData>({
+    defaultValues: {
+      nombre: '',
+      apellido: '',
+      fecha_nacimiento: new Date(),
+      estado_fisico: 'En forma',
+      condicion_pago: 'Al dia'
     }
+  });
 
-    if (nombre.trim().length < 2 || apellido.trim().length < 2) {
-      alert('El nombre y apellido deben tener al menos 2 caracteres');
-      return;
-    }
-
-    // Validar que la fecha no sea futura
-    const birthDate = new Date(fechaNacimiento);
-    const today = new Date();
-    if (birthDate > today) {
-      alert('La fecha de nacimiento no puede ser futura');
-      return;
-    }
-
+  const onSubmitForm = (data: ChildFormData) => {
     onSubmit({
-      nombre: nombre.trim(),
-      apellido: apellido.trim(),
-      fecha_nacimiento: fechaNacimiento,
-      estado_fisico: estadoFisico,
-      condicion_pago: condicionPago,
+      nombre: data.nombre.trim(),
+      apellido: data.apellido.trim(),
+      fecha_nacimiento: data.fecha_nacimiento?.toISOString().split('T')[0] || '',
+      estado_fisico: data.estado_fisico,
+      condicion_pago: data.condicion_pago,
       team_id: teamId
     });
-
-    // Limpiar formulario
-    setNombre('');
-    setApellido('');
-    setFechaNacimiento('');
-    setEstadoFisico('En forma');
-    setCondicionPago('Al dia');
+    reset({
+      nombre: '',
+      apellido: '',
+      fecha_nacimiento: new Date(),
+      estado_fisico: 'En forma',
+      condicion_pago: 'Al dia'
+    });
   };
 
   if (!isVisible) return null;
-
-  return (    <div className="add-child-form">
+  return (
+    <div className="add-child-form">
       <h3>Agregar Nuevo Niño</h3>
-      <form className="row g-3" onSubmit={handleSubmit}>
+      <form className="row g-3" onSubmit={handleSubmit(onSubmitForm)}>
         <div className="col-md-6">
           <label htmlFor="child-name" className="form-label">Nombre *</label>
           <input
             id="child-name"
             type="text"
-            className="form-control"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
+            className={`form-control ${errors.nombre ? 'error' : ''}`}
+            {...register('nombre', {
+              required: 'El nombre es obligatorio',
+              minLength: {
+                value: 2,
+                message: 'El nombre debe tener al menos 2 caracteres'
+              },
+              maxLength: {
+                value: 70,
+                message: 'El nombre no puede exceder 70 caracteres'
+              },
+              pattern: {
+                value: /^[a-zA-ZÀ-ÿÑñ\s]+$/,
+                message: 'El nombre solo puede contener letras y espacios'
+              }
+            })}
             placeholder="Nombre del niño"
-            maxLength={50}
-            required
+            maxLength={70}
           />
+          {errors.nombre && (
+            <span className="error-text">{errors.nombre.message}</span>
+          )}
         </div>
 
         <div className="col-md-6">
@@ -75,26 +91,69 @@ const ChildForm: React.FC<ChildFormProps> = ({ teamId, onSubmit, isVisible }) =>
           <input
             id="child-lastname"
             type="text"
-            className="form-control"
-            value={apellido}
-            onChange={(e) => setApellido(e.target.value)}
+            className={`form-control ${errors.apellido ? 'error' : ''}`}
+            {...register('apellido', {
+              required: 'El apellido es obligatorio',
+              minLength: {
+                value: 2,
+                message: 'El apellido debe tener al menos 2 caracteres'
+              },
+              maxLength: {
+                value: 70,
+                message: 'El apellido no puede exceder 70 caracteres'
+              },
+              pattern: {
+                value: /^[a-zA-ZÀ-ÿÑñ\s]+$/,
+                message: 'El apellido solo puede contener letras y espacios'
+              }
+            })}
             placeholder="Apellido del niño"
-            maxLength={50}
-            required
+            maxLength={70}
           />
-        </div>
-
-        <div className="col-md-4">
+          {errors.apellido && (
+            <span className="error-text">{errors.apellido.message}</span>
+          )}
+        </div>        <div className="col-md-4">
           <label htmlFor="child-birthdate" className="form-label">Fecha de Nacimiento *</label>
-          <input
-            id="child-birthdate"
-            type="date"
-            className="form-control"
-            value={fechaNacimiento}
-            onChange={(e) => setFechaNacimiento(e.target.value)}
-            max={new Date().toISOString().split('T')[0]}
-            required
+          <Controller
+            name="fecha_nacimiento"
+            control={control}
+            rules={{
+              required: 'La fecha de nacimiento es obligatoria',
+              validate: {
+                notFuture: (value) => {
+                  if (!value) return 'La fecha de nacimiento es obligatoria';
+                  const today = new Date();
+                  return value <= today || 'La fecha de nacimiento no puede ser futura';
+                },
+                notTooOld: (value) => {
+                  if (!value) return 'La fecha de nacimiento es obligatoria';
+                  const today = new Date();
+                  const age = today.getFullYear() - value.getFullYear();
+                  return age <= 25 || 'La edad no puede ser mayor a 25 años';
+                }
+              }
+            }}
+            render={({ field }) => (
+              <DatePicker
+                selected={field.value}
+                onChange={(date) => field.onChange(date)}
+                dateFormat="dd/MM/yyyy"
+                placeholderText="Selecciona una fecha"
+                maxDate={new Date()}
+                showYearDropdown
+                showMonthDropdown
+                yearDropdownItemNumber={25}
+                dropdownMode="select"
+                className={`form-control date-picker-input ${errors.fecha_nacimiento ? 'error' : ''}`}
+                calendarClassName="custom-datepicker"
+                wrapperClassName="date-picker-wrapper"
+              />
+            )}
           />
+          {errors.fecha_nacimiento && (
+            <span className="error-text">{errors.fecha_nacimiento.message}</span>
+          )}
         </div>
 
         <div className="col-md-4">
@@ -102,8 +161,7 @@ const ChildForm: React.FC<ChildFormProps> = ({ teamId, onSubmit, isVisible }) =>
           <select
             id="child-physical-state"
             className="form-select"
-            value={estadoFisico}
-            onChange={(e) => setEstadoFisico(e.target.value as 'En forma' | 'Lesionado')}
+            {...register('estado_fisico')}
           >
             <option value="En forma">💪 En forma</option>
             <option value="Lesionado">🤕 Lesionado</option>
@@ -115,8 +173,7 @@ const ChildForm: React.FC<ChildFormProps> = ({ teamId, onSubmit, isVisible }) =>
           <select
             id="child-payment-status"
             className="form-select"
-            value={condicionPago}
-            onChange={(e) => setCondicionPago(e.target.value as 'Al dia' | 'En deuda')}
+            {...register('condicion_pago')}
           >
             <option value="Al dia">✅ Al día</option>
             <option value="En deuda">⚠️ En deuda</option>

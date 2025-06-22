@@ -30,7 +30,6 @@ function App() {
     loading: false,
     error: null
   });
-
   // Estados UI específicos
   const [showTeamForm, setShowTeamForm] = useState(false);
   const [showMoveModal, setShowMoveModal] = useState(false);
@@ -38,10 +37,13 @@ function App() {
   const [showDeleteTeamConfirm, setShowDeleteTeamConfirm] = useState(false);
   const [teamToDelete, setTeamToDelete] = useState<number | null>(null);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
-
-  // Cargar equipos al montar el componente
+  
+  // Estados para búsqueda global
+  const [globalSearchTerm, setGlobalSearchTerm] = useState('');
+  const [allChildren, setAllChildren] = useState<Child[]>([]);  // Cargar equipos al montar el componente
   useEffect(() => {
     loadTeams();
+    loadAllChildren(); // Cargar todos los niños para búsqueda global
   }, []);
 
   // Cargar niños cuando se selecciona un equipo
@@ -85,6 +87,44 @@ function App() {
         loading: false, 
         error: 'Error al cargar los niños' 
       }));
+    }  };
+
+  /**
+   * Función para cargar todos los niños (para búsqueda global)
+   */
+  const loadAllChildren = async () => {
+    try {
+      const children = await childrenService.getAllChildren();
+      setAllChildren(children);
+    } catch (error) {
+      console.error('Error al cargar todos los niños:', error);
+    }
+  };
+
+  /**
+   * Filtrar niños para búsqueda global
+   */
+  const filteredGlobalChildren = allChildren.filter(child =>
+    globalSearchTerm && (
+      child.nombre.toLowerCase().includes(globalSearchTerm.toLowerCase()) ||
+      child.apellido.toLowerCase().includes(globalSearchTerm.toLowerCase())
+    )
+  );
+  /**
+   * Obtener equipo de un niño específico
+   */
+  const getTeamForChild = (teamId: number): Team | undefined => {
+    return appState.teams.find(team => team.id === teamId);
+  };
+
+  /**
+   * Navegar directamente a un equipo desde la búsqueda global
+   */
+  const handleNavigateToTeam = (teamId: number) => {
+    const team = getTeamForChild(teamId);
+    if (team) {
+      setGlobalSearchTerm(''); // Limpiar búsqueda
+      handleSelectTeam(team); // Navegar al equipo
     }
   };
 
@@ -324,6 +364,69 @@ function App() {
           <div className="header-content">
             <h1>Lista de Chicos</h1>
             <p className="subtitle">Gestión de equipos y participantes</p>
+          </div>
+          
+          {/* Búsqueda global de niños */}
+          <div className="global-search-container">
+            <div className="global-search-box">
+              <i className="bi bi-search search-icon"></i>
+              <input
+                type="text"
+                placeholder="Buscar niños en todos los equipos..."
+                value={globalSearchTerm}
+                onChange={(e) => setGlobalSearchTerm(e.target.value)}
+                className="global-search-input"
+              />
+              {globalSearchTerm && (
+                <button
+                  onClick={() => setGlobalSearchTerm('')}
+                  className="clear-search-btn"
+                  title="Limpiar búsqueda"
+                >
+                  <i className="bi bi-x-circle-fill"></i>
+                </button>
+              )}
+            </div>
+            
+            {/* Resultados de búsqueda global */}
+            {globalSearchTerm && (
+              <div className="global-search-results">
+                {filteredGlobalChildren.length === 0 ? (
+                  <div className="no-results">
+                    <p>No se encontraron niños que coincidan con "{globalSearchTerm}"</p>
+                  </div>
+                ) : (
+                  <div className="results-list">
+                    <div className="results-header">
+                      <span>Encontrados: {filteredGlobalChildren.length} niño{filteredGlobalChildren.length !== 1 ? 's' : ''}</span>
+                    </div>                    {filteredGlobalChildren.map(child => {
+                      const team = getTeamForChild(child.team_id);
+                      return (
+                        <div 
+                          key={child.id} 
+                          className="search-result-item"
+                          onClick={() => handleNavigateToTeam(child.team_id)}
+                          title={`Ir al equipo ${team?.nombre || 'desconocido'}`}
+                        >
+                          <div className="child-info">
+                            <span className="child-name">{child.nombre} {child.apellido}</span>
+                            <span className="child-age">({child.edad} años)</span>
+                          </div>                          <div className="team-info">
+                            <span 
+                              className="team-badge" 
+                              style={{ backgroundColor: team?.color || '#6c757d' }}
+                            >
+                              {team?.nombre || 'Equipo desconocido'}
+                            </span>
+                            <i className="bi bi-arrow-right-circle-fill navigate-icon"></i>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </header>
 

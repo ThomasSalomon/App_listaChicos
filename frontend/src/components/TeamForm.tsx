@@ -3,63 +3,79 @@
  * Formulario para crear nuevos equipos
  */
 
-import React, { useState } from 'react';
+import React from 'react';
+import { useForm } from 'react-hook-form';
 import type { TeamFormProps } from '../types';
 
+interface TeamFormData {
+  nombre: string;
+  descripcion?: string;
+  color: string;
+}
+
 const TeamForm: React.FC<TeamFormProps> = ({ onSubmit, onCancel, isVisible }) => {
-  const [nombre, setNombre] = useState('');
-  const [descripcion, setDescripcion] = useState('');
-  const [color, setColor] = useState('#3B82F6');
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!nombre.trim()) {
-      alert('El nombre del equipo es obligatorio');
-      return;
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+    watch
+  } = useForm<TeamFormData>({
+    defaultValues: {
+      nombre: '',
+      descripcion: '',
+      color: '#3B82F6'
     }
+  });
 
-    if (nombre.trim().length < 2 || nombre.trim().length > 50) {
-      alert('El nombre debe tener entre 2 y 50 caracteres');
-      return;
-    }
+  const watchedColor = watch('color');
 
+  const onSubmitForm = (data: TeamFormData) => {
     onSubmit({
-      nombre: nombre.trim(),
-      descripcion: descripcion.trim() || undefined,
-      color: color
+      nombre: data.nombre.trim(),
+      descripcion: data.descripcion?.trim() || undefined,
+      color: data.color
     });
-
-    // Limpiar formulario
-    setNombre('');
-    setDescripcion('');
-    setColor('#3B82F6');
+    reset();
   };
 
   const handleCancel = () => {
-    setNombre('');
-    setDescripcion('');
-    setColor('#3B82F6');
+    reset();
     onCancel();
   };
 
   if (!isVisible) return null;
-
   return (
     <div className="create-team-form">
       <h2>Crear Nuevo Equipo</h2>
-      <form className="form-grid" onSubmit={handleSubmit}>
+      <form className="form-grid" onSubmit={handleSubmit(onSubmitForm)}>
         <div>
           <label htmlFor="team-name">Nombre del Equipo *</label>
           <input
             id="team-name"
             type="text"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            placeholder="Nombre del equipo (2-50 caracteres)"
-            maxLength={50}
-            required
+            {...register('nombre', {
+              required: 'El nombre del equipo es obligatorio',
+              minLength: {
+                value: 4,
+                message: 'El nombre debe tener al menos 4 caracteres'
+              },
+              maxLength: {
+                value: 70,
+                message: 'El nombre no puede exceder 70 caracteres'
+              },
+              pattern: {
+                value: /^[a-zA-ZÀ-ÿÑñ\s]+$/,
+                message: 'El nombre solo puede contener letras y espacios'
+              }
+            })}
+            placeholder="Nombre del equipo (4-70 caracteres)"
+            maxLength={70}
+            className={errors.nombre ? 'error' : ''}
           />
+          {errors.nombre && (
+            <span className="error-text">{errors.nombre.message}</span>
+          )}
         </div>
 
         <div>
@@ -67,22 +83,40 @@ const TeamForm: React.FC<TeamFormProps> = ({ onSubmit, onCancel, isVisible }) =>
           <input
             id="team-description"
             type="text"
-            value={descripcion}
-            onChange={(e) => setDescripcion(e.target.value)}
+            {...register('descripcion', {
+              maxLength: {
+                value: 100,
+                message: 'La descripción no puede exceder 100 caracteres'
+              }
+            })}
             placeholder="Descripción del equipo (hasta 100 caracteres)"
             maxLength={100}
+            className={errors.descripcion ? 'error' : ''}
           />
-        </div>
-
-        <div className="color-input-group">
+          {errors.descripcion && (
+            <span className="error-text">{errors.descripcion.message}</span>
+          )}
+        </div>        <div className="color-input-group">
           <label htmlFor="team-color">Color del Equipo</label>
-          <input
-            id="team-color"
-            type="color"
-            value={color}
-            onChange={(e) => setColor(e.target.value)}
-          />
-          <span style={{ color: color }}>●</span>
+          <div className="color-picker-container">
+            <div className="color-input-wrapper">
+              <input
+                id="team-color"
+                type="color"
+                {...register('color')}
+              />
+            </div>
+            <div className="color-preview">
+              <div 
+                className="color-preview-dot" 
+                style={{ backgroundColor: watchedColor }}
+              ></div>
+              <div className="color-preview-text">
+                Vista Previa
+                <div className="color-hex">{watchedColor}</div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="form-buttons">
