@@ -112,21 +112,21 @@ const ChildList: React.FC<ChildListProps> = ({
   const handleCancelClearAll = () => {
     setShowClearConfirm(false);
   };
-
   return (
     <div className="children-view">
-      <div className="children-header">        <button onClick={onBack} className="back-btn btn">
+      <div className="selected-team-header">
+        <div className="team-info">
+          <div className="team-color-indicator" style={{ backgroundColor: team.color }}></div>
+          <div>
+            <h2>{team.nombre}</h2>
+            {team.descripcion && <p className="team-description">{team.descripcion}</p>}
+          </div>
+        </div>
+        <button onClick={onBack} className="back-btn btn">
           <i className="bi bi-arrow-left me-2"></i>
           Volver a Equipos
         </button>
-        <div className="team-info-header">
-          <h2 style={{ color: team.color }}>
-            <span className="team-color-dot" style={{ backgroundColor: team.color }}></span>
-            {team.nombre}
-          </h2>
-          {team.descripcion && <p>{team.descripcion}</p>}
-        </div>
-      </div>      <div className="children-content">
+      </div><div className="children-content">
         <div className="children-controls">
           <button 
             onClick={() => setShowForm(!showForm)} 
