@@ -4,7 +4,7 @@ const path = require('path');
 class Database {
   constructor() {
     this.db = null;
-    this.dbPath = path.join(__dirname, '..', 'database', 'children.sqlite');
+    this.dbPath = path.join(__dirname, '..', 'database', 'database.sqlite');
   }
   // Conectar a la base de datos
   connect() {
