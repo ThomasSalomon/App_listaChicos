@@ -213,13 +213,22 @@ class ChildrenController {
         });
       }
 
+      // Obtener el niño actual para preservar el team_id si no se proporciona
+      const existingChild = await ChildrenModel.getById(parseInt(id));
+      if (!existingChild) {
+        return res.status(404).json({ 
+          error: 'Niño no encontrado',
+          message: `No se encontró un niño con ID: ${id}`
+        });
+      }
+
       const childData = {
         nombre: nombre.trim(),
         apellido: apellido.trim(),
         fecha_nacimiento: fecha_nacimiento,
         estado_fisico: estado_fisico || 'En forma',
         condicion_pago: condicion_pago || 'Al dia',
-        team_id: team_id ? parseInt(team_id) : undefined
+        team_id: team_id ? parseInt(team_id) : existingChild.team_id // Preservar team_id actual si no se proporciona
       };
 
       const updatedChild = await ChildrenModel.update(parseInt(id), childData);

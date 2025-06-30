@@ -122,7 +122,7 @@ class ChildrenModel {
         formattedDate, 
         estado_fisico || 'En forma',
         condicion_pago || 'Al dia',
-        team_id || 1, 
+        team_id, // No usar valor por defecto, debe venir del controlador
         id
       ], function(err) {
         if (err) {
@@ -138,7 +138,7 @@ class ChildrenModel {
             estado_fisico: estado_fisico || 'En forma',
             condicion_pago: condicion_pago || 'Al dia',
             edad: calculateAge(formattedDate),
-            team_id: team_id || 1,
+            team_id: team_id, // No usar valor por defecto
             updated_at: new Date().toISOString()
           };
           resolve(updatedChild);

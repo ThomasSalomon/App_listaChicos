@@ -202,6 +202,7 @@ function App() {
       setAppState(prev => ({ ...prev, loading: true }));
       await childrenService.createChild(childData);
       await loadChildren();
+      await loadAllChildren(); // Actualizar búsqueda global
       setAppState(prev => ({ ...prev, loading: false }));
     } catch (error) {
       console.error('Error al agregar niño:', error);
@@ -218,6 +219,7 @@ function App() {
       setAppState(prev => ({ ...prev, loading: true }));
       await childrenService.updateChild(id, childData);
       await loadChildren();
+      await loadAllChildren(); // Actualizar búsqueda global
       setAppState(prev => ({ ...prev, loading: false }));
     } catch (error) {
       console.error('Error al actualizar niño:', error);
@@ -234,6 +236,7 @@ function App() {
       setAppState(prev => ({ ...prev, loading: true }));
       await childrenService.deleteChild(childId);
       await loadChildren();
+      await loadAllChildren(); // Actualizar búsqueda global
       setAppState(prev => ({ ...prev, loading: false }));
     } catch (error) {
       console.error('Error al eliminar niño:', error);
@@ -249,6 +252,7 @@ function App() {
       setAppState(prev => ({ ...prev, loading: true }));
       await childrenService.moveChildToTeam(childId, { new_team_id: newTeamId });
       await loadChildren();
+      await loadAllChildren(); // Actualizar búsqueda global
       setShowMoveModal(false);
       setChildToMove(null);
       setAppState(prev => ({ ...prev, loading: false }));
@@ -275,6 +279,7 @@ function App() {
       );
       await Promise.all(deletePromises);
       await loadChildren();
+      await loadAllChildren(); // Actualizar búsqueda global
       setAppState(prev => ({ ...prev, loading: false }));
     } catch (error) {
       console.error('Error al limpiar lista:', error);
@@ -314,15 +319,19 @@ function App() {
    */
   if (appState.loading) {
     return (
-      <div className="app loading">
-        <div className="loading-spinner">Cargando...</div>
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-indigo-500 border-t-transparent"></div>
+          <p className="text-lg font-medium text-gray-600">Cargando...</p>
+        </div>
       </div>
     );
   }
 
   if (appState.currentView === 'children' && appState.selectedTeam) {
     return (
-      <div className="app">        <ChildList
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50">
+        <ChildList
           team={appState.selectedTeam}
           children={appState.children}
           teams={appState.teams}
@@ -347,11 +356,16 @@ function App() {
         />
 
         {appState.error && (
-          <div className="error-message">
-            {appState.error}
-            <button onClick={() => setAppState(prev => ({ ...prev, error: null }))}>
-              ✕
-            </button>
+          <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg animate-slide-in-up z-50">
+            <div className="flex items-center justify-between">
+              <span>{appState.error}</span>
+              <button 
+                onClick={() => setAppState(prev => ({ ...prev, error: null }))}
+                className="ml-4 text-xl font-bold hover:text-red-900 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -359,66 +373,93 @@ function App() {
   }
 
   return (
-    <div className="app">
-      <div className="teams-view">        <header className="app-header">
-          <div className="header-content">
-            <h1>Lista de Chicos</h1>
-            <p className="subtitle">Gestión de equipos y participantes</p>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <header className="text-center mb-12">
+          <div className="glass rounded-2xl p-8 mb-8 shadow-xl">
+            <h1 className="text-4xl font-bold text-gray-900 mb-2 gradient-text">
+              Lista de Chicos
+            </h1>
+            <p className="text-lg text-gray-600 font-medium">
+              Gestión de equipos y participantes
+            </p>
           </div>
           
-          {/* Búsqueda global de niños */}
-          <div className="global-search-container">
-            <div className="global-search-box">
-              <i className="bi bi-search search-icon"></i>
+          {/* Búsqueda global */}
+          <div className="max-w-2xl mx-auto">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
               <input
                 type="text"
                 placeholder="Buscar niños en todos los equipos..."
                 value={globalSearchTerm}
                 onChange={(e) => setGlobalSearchTerm(e.target.value)}
-                className="global-search-input"
+                className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-lg transition-all duration-200"
               />
               {globalSearchTerm && (
                 <button
                   onClick={() => setGlobalSearchTerm('')}
-                  className="clear-search-btn"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
                   title="Limpiar búsqueda"
                 >
-                  <i className="bi bi-x-circle-fill"></i>
+                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
                 </button>
               )}
             </div>
             
-            {/* Resultados de búsqueda global */}
+            {/* Resultados de búsqueda */}
             {globalSearchTerm && (
-              <div className="global-search-results">
+              <div className="mt-4 bg-white rounded-xl shadow-lg border border-gray-200 max-h-96 overflow-y-auto">
                 {filteredGlobalChildren.length === 0 ? (
-                  <div className="no-results">
-                    <p>No se encontraron niños que coincidan con "{globalSearchTerm}"</p>
+                  <div className="p-6 text-center">
+                    <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.47.726-6.248 1.957"/>
+                    </svg>
+                    <p className="text-gray-500">No se encontraron niños que coincidan con "{globalSearchTerm}"</p>
                   </div>
                 ) : (
-                  <div className="results-list">
-                    <div className="results-header">
-                      <span>Encontrados: {filteredGlobalChildren.length} niño{filteredGlobalChildren.length !== 1 ? 's' : ''}</span>
-                    </div>                    {filteredGlobalChildren.map(child => {
+                  <div className="divide-y divide-gray-100">
+                    <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                      <span className="text-sm font-medium text-gray-700">
+                        Encontrados: {filteredGlobalChildren.length} niño{filteredGlobalChildren.length !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                    
+                    {filteredGlobalChildren.map(child => {
                       const team = getTeamForChild(child.team_id);
                       return (
                         <div 
                           key={child.id} 
-                          className="search-result-item"
+                          className="px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors group"
                           onClick={() => handleNavigateToTeam(child.team_id)}
                           title={`Ir al equipo ${team?.nombre || 'desconocido'}`}
                         >
-                          <div className="child-info">
-                            <span className="child-name">{child.nombre} {child.apellido}</span>
-                            <span className="child-age">({child.edad} años)</span>
-                          </div>                          <div className="team-info">
-                            <span 
-                              className="team-badge" 
-                              style={{ backgroundColor: team?.color || '#6c757d' }}
-                            >
-                              {team?.nombre || 'Equipo desconocido'}
-                            </span>
-                            <i className="bi bi-arrow-right-circle-fill navigate-icon"></i>
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2">
+                                <span className="font-medium text-gray-900">{child.nombre} {child.apellido}</span>
+                                <span className="text-sm text-gray-500">({child.edad} años)</span>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center space-x-3">
+                              <span 
+                                className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium text-white"
+                                style={{ backgroundColor: team?.color || '#6b7280' }}
+                              >
+                                {team?.nombre || 'Equipo desconocido'}
+                              </span>
+                              <svg className="h-5 w-5 text-gray-400 group-hover:text-gray-600 transition-colors" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                              </svg>
+                            </div>
                           </div>
                         </div>
                       );
@@ -430,28 +471,42 @@ function App() {
           </div>
         </header>
 
-        <main className="teams-container">
-          {!showTeamForm && (            <button 
-              className="create-team-btn-floating btn"
-              onClick={() => setShowTeamForm(true)}
-            >
-              <i className="bi bi-plus-circle-fill me-2"></i>
-              <span className="btn-text">Crear Nuevo Equipo</span>
-            </button>
+        {/* Main Content */}
+        <main className="space-y-8">
+          {/* Botón crear equipo flotante */}
+          {!showTeamForm && (
+            <div className="text-center">
+              <button 
+                className="btn-primary inline-flex items-center px-6 py-3 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                onClick={() => setShowTeamForm(true)}
+              >
+                <svg className="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                </svg>
+                Crear Nuevo Equipo
+              </button>
+            </div>
           )}
 
+          {/* Formulario de creación de equipo */}
           <TeamForm
             onSubmit={handleCreateTeam}
             onCancel={() => setShowTeamForm(false)}
             isVisible={showTeamForm}
           />
 
-          <div className="teams-grid">
+          {/* Grid de equipos */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {appState.teams.length === 0 ? (
-              <div className="empty-state">
-                <h3>¡Bienvenido!</h3>
-                <p>No hay equipos creados aún.</p>
-                <p>Haz clic en "Crear Nuevo Equipo" para comenzar.</p>
+              <div className="col-span-full text-center py-16">
+                <div className="glass rounded-2xl p-8 max-w-md mx-auto">
+                  <svg className="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">¡Bienvenido!</h3>
+                  <p className="text-gray-600 mb-1">No hay equipos creados aún.</p>
+                  <p className="text-gray-600">Haz clic en "Crear Nuevo Equipo" para comenzar.</p>
+                </div>
               </div>
             ) : (
               appState.teams.map(team => (
@@ -464,9 +519,17 @@ function App() {
               ))
             )}
           </div>
-        </main>        <footer className="app-footer">
-          <button onClick={handleExit} className="exit-btn btn">
-            <i className="bi bi-box-arrow-right me-2"></i>
+        </main>
+        
+        {/* Footer */}
+        <footer className="mt-16 text-center">
+          <button 
+            onClick={handleExit} 
+            className="btn-secondary inline-flex items-center px-6 py-3 rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
             Salir de la Aplicación
           </button>
         </footer>
@@ -492,12 +555,18 @@ function App() {
         onCancel={() => setShowExitConfirm(false)}
       />
 
+      {/* Error Message */}
       {appState.error && (
-        <div className="error-message">
-          {appState.error}
-          <button onClick={() => setAppState(prev => ({ ...prev, error: null }))}>
-            ✕
-          </button>
+        <div className="fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg animate-slide-in-up z-50">
+          <div className="flex items-center justify-between">
+            <span>{appState.error}</span>
+            <button 
+              onClick={() => setAppState(prev => ({ ...prev, error: null }))}
+              className="ml-4 text-xl font-bold hover:text-red-900 transition-colors"
+            >
+              ✕
+            </button>
+          </div>
         </div>
       )}
     </div>

@@ -34,51 +34,92 @@ const MoveChildModal: React.FC<MoveChildModalProps> = ({
   const availableTeams = teams.filter(team => team.id !== currentTeamId);
 
   return (
-    <div className="modal-overlay">
-      <div className="move-child-modal">
-        <h3>Mover a {child.nombre} {child.apellido}</h3>
-        <p>Selecciona el equipo destino:</p>
-        
-        <div className="team-selection">
-          {availableTeams.map(team => (
-            <label key={team.id} className="team-option">
-              <input
-                type="radio"
-                name="targetTeam"
-                value={team.id}
-                checked={selectedTeamId === team.id}
-                onChange={() => setSelectedTeamId(team.id)}
-              />
-              <div className="team-option-content">
-                <div 
-                  className="team-color-indicator" 
-                  style={{ backgroundColor: team.color }}
-                ></div>
-                <span className="team-name">{team.nombre}</span>
-                {team.descripcion && (
-                  <span className="team-description">({team.descripcion})</span>
-                )}
-              </div>
-            </label>
-          ))}
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 animate-fade-in">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-hidden animate-slide-in-up">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-4">
+          <h3 className="text-xl font-bold text-white mb-1">
+            Mover Niño
+          </h3>
+          <p className="text-indigo-100 text-sm">
+            {child.nombre} {child.apellido}
+          </p>
         </div>
 
-        {availableTeams.length === 0 && (
-          <p className="no-teams-message">
-            No hay otros equipos disponibles para mover este niño.
+        {/* Content */}
+        <div className="p-6">
+          <p className="text-gray-700 mb-4 font-medium">
+            Selecciona el equipo destino:
           </p>
-        )}
+          
+          {availableTeams.length === 0 ? (
+            <div className="text-center py-8">
+              <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <p className="text-gray-500">
+                No hay otros equipos disponibles para mover este niño.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3 max-h-64 overflow-y-auto">
+              {availableTeams.map(team => (
+                <label 
+                  key={team.id} 
+                  className={`flex items-center p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:bg-gray-50 ${
+                    selectedTeamId === team.id 
+                      ? 'border-indigo-500 bg-indigo-50' 
+                      : 'border-gray-200'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="targetTeam"
+                    value={team.id}
+                    checked={selectedTeamId === team.id}
+                    onChange={() => setSelectedTeamId(team.id)}
+                    className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                  />
+                  <div className="ml-3 flex items-center space-x-3 flex-1">
+                    <div 
+                      className="w-4 h-4 rounded-full border-2 border-white shadow-sm flex-shrink-0"
+                      style={{ backgroundColor: team.color }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 truncate">
+                        {team.nombre}
+                      </p>
+                      {team.descripcion && (
+                        <p className="text-sm text-gray-500 truncate">
+                          {team.descripcion}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
         
-        <div className="move-buttons">
+        {/* Footer */}
+        <div className="bg-gray-50 px-6 py-4 flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-3 space-y-3 space-y-reverse sm:space-y-0">
           <button 
-            onClick={handleMove} 
-            className="move-confirm-btn"
+            onClick={handleCancel}
+            className="btn-secondary w-full sm:w-auto px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200"
+          >
+            Cancelar
+          </button>
+          <button 
+            onClick={handleMove}
             disabled={!selectedTeamId}
+            className={`w-full sm:w-auto px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+              selectedTeamId
+                ? 'btn-success'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
           >
             Mover
-          </button>
-          <button onClick={handleCancel} className="move-cancel-btn">
-            Cancelar
           </button>
         </div>
       </div>

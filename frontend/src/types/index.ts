@@ -115,10 +115,12 @@ export interface ChildItemProps {
   isEditing: boolean;
   onUpdate: (id: number, childData: UpdateChildData) => void;
   onCancelEdit: () => void;
+  teamColor?: string;
 }
 
 export interface ChildFormProps {
   teamId: number;
+  teamColor?: string;
   onSubmit: (childData: CreateChildData) => void;
   isVisible: boolean;
 }
