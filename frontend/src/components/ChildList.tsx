@@ -7,28 +7,25 @@
 import React, { useState } from 'react';
 import ChildItem from './ChildItem';
 import ChildForm from './ChildForm';
-import MoveChildModal from './MoveChildModal';
 import ConfirmDialog from './ConfirmDialog';
 import type { Team, Child, CreateChildData, UpdateChildData } from '../types';
 
 export interface ChildListProps {
   team: Team;
   children: Child[];
-  teams: Team[]; // Agregar esta prop
-  highlightedChildId?: number | null; // Nueva prop para destacar niño
+  highlightedChildId?: number | null; // Prop para destacar niño
   onBack: () => void;
   onAddChild: (childData: CreateChildData) => void;
   onUpdateChild: (id: number, childData: UpdateChildData) => void;
   onDeleteChild: (id: number) => void;
-  onMoveChild: (id: number, newTeamId: number) => void;
+  onMoveChild: (child: Child) => void; // Recibe el objeto Child
   onClearAll: () => void;
 }
 
 const ChildList: React.FC<ChildListProps> = React.memo(({ 
   team, 
   children,
-  teams, // Nueva prop
-  highlightedChildId, // Nueva prop para destacar niño
+  highlightedChildId, // Prop para destacar niño
   onBack, 
   onAddChild, 
   onUpdateChild, 
@@ -38,10 +35,9 @@ const ChildList: React.FC<ChildListProps> = React.memo(({
 }) => {
   const [showForm, setShowForm] = useState(false);
   const [editingChild, setEditingChild] = useState<Child | null>(null);
-  const [showMoveModal, setShowMoveModal] = useState(false);
-  const [childToMove, setChildToMove] = useState<Child | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [childToDelete, setChildToDelete] = useState<number | null>(null);  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [childToDelete, setChildToDelete] = useState<number | null>(null);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
   // Filtrar niños basado en el término de búsqueda
@@ -70,19 +66,7 @@ const ChildList: React.FC<ChildListProps> = React.memo(({
   };
 
   const handleMoveChild = (child: Child) => {
-    setChildToMove(child);
-    setShowMoveModal(true);
-  };
-
-  const handleConfirmMove = (childId: number, newTeamId: number) => {
-    onMoveChild(childId, newTeamId);
-    setShowMoveModal(false);
-    setChildToMove(null);
-  };
-
-  const handleCancelMove = () => {
-    setShowMoveModal(false);
-    setChildToMove(null);
+    onMoveChild(child); // Llamar directamente a la prop
   };
 
   const handleDeleteClick = (childId: number) => {
@@ -286,15 +270,6 @@ const ChildList: React.FC<ChildListProps> = React.memo(({
       </div>
 
       {/* Modales */}
-      <MoveChildModal
-        child={childToMove}
-        teams={teams}
-        currentTeamId={team.id}
-        isVisible={showMoveModal}
-        onMove={handleConfirmMove}
-        onCancel={handleCancelMove}
-      />
-
       <ConfirmDialog
         isVisible={showDeleteConfirm}
         title="Confirmar Eliminación"
