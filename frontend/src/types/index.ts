@@ -113,6 +113,7 @@ export interface ChildItemProps {
   onDelete: (id: number) => void;
   onMove: (child: Child) => void;
   isEditing: boolean;
+  isHighlighted?: boolean; // Nueva prop para destacar el niño
   onUpdate: (id: number, childData: UpdateChildData) => void;
   onCancelEdit: () => void;
   teamColor?: string;

@@ -4,7 +4,7 @@
  * OPTIMIZADO: React.memo para prevenir re-renders innecesarios
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import type { ChildItemProps } from '../types';
@@ -15,10 +15,12 @@ const ChildItem: React.FC<ChildItemProps> = React.memo(({
   onDelete, 
   onMove, 
   isEditing, 
+  isHighlighted = false,
   onUpdate, 
   onCancelEdit,
   teamColor
 }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [editData, setEditData] = useState({
     nombre: child.nombre,
     apellido: child.apellido,
@@ -38,6 +40,16 @@ const ChildItem: React.FC<ChildItemProps> = React.memo(({
       });
     }
   }, [isEditing, child]);
+
+  // Efecto para hacer scroll automático cuando el niño es destacado
+  useEffect(() => {
+    if (isHighlighted && containerRef.current) {
+      containerRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+    }
+  }, [isHighlighted]);
 
   const handleSave = () => {
     if (!editData.nombre.trim() || !editData.apellido.trim() || !editData.fecha_nacimiento) {
@@ -100,7 +112,15 @@ const ChildItem: React.FC<ChildItemProps> = React.memo(({
 
   if (isEditing) {
     return (
-      <div className="bg-white rounded-lg shadow-md border-l-4 p-4 animate-slide-in-up" style={{ borderLeftColor: teamColor }}>
+      <div 
+        ref={containerRef}
+        className={`bg-white rounded-lg shadow-md border-l-4 p-4 animate-slide-in-up ${
+          isHighlighted 
+            ? 'ring-4 ring-blue-500 ring-opacity-50 shadow-xl bg-blue-50' 
+            : ''
+        }`} 
+        style={{ borderLeftColor: teamColor }}
+      >
         <div className="space-y-4">
           {/* Primera fila: Nombre y Apellido */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -202,7 +222,15 @@ const ChildItem: React.FC<ChildItemProps> = React.memo(({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 border-l-4 p-4 group animate-slide-in-up" style={{ borderLeftColor: teamColor }}>
+    <div 
+      ref={containerRef}
+      className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-500 border-l-4 p-4 group animate-slide-in-up ${
+        isHighlighted 
+          ? 'ring-4 ring-blue-500 ring-opacity-50 shadow-xl transform scale-105 bg-blue-50' 
+          : ''
+      }`} 
+      style={{ borderLeftColor: teamColor }}
+    >
       <div className="flex items-center justify-between">
         {/* Información del niño */}
         <div className="flex-1 min-w-0">

@@ -3,7 +3,7 @@
  * Refactorizado para usar arquitectura de componentes y servicios
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import './App.css';
 
 // Importar servicios
@@ -38,9 +38,12 @@ function App() {
   const [teamToDelete, setTeamToDelete] = useState<number | null>(null);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   
-  // Estados para búsqueda global
+  // Estados para búsqueda global y foco
   const [globalSearchTerm, setGlobalSearchTerm] = useState('');
-  const [allChildren, setAllChildren] = useState<Child[]>([]);  // Cargar equipos al montar el componente
+  const [allChildren, setAllChildren] = useState<Child[]>([]);
+  const [highlightedChildId, setHighlightedChildId] = useState<number | null>(null);
+
+  // Cargar equipos al montar el componente
   useEffect(() => {
     loadTeams();
     loadAllChildren(); // Cargar todos los niños para búsqueda global
@@ -118,12 +121,30 @@ function App() {
   };
 
   /**
-   * Navegar directamente a un equipo desde la búsqueda global
+   * 🎯 FUNCIÓN HELPER: Destacar un niño con scroll automático
    */
-  const handleNavigateToTeam = (teamId: number) => {
+  const highlightChild = useCallback((childId: number, duration: number = 3000) => {
+    setHighlightedChildId(childId);
+    
+    // Limpiar el destacado después del tiempo especificado
+    setTimeout(() => {
+      setHighlightedChildId(null);
+    }, duration);
+  }, []);
+
+  /**
+   * Navegar directamente a un equipo desde la búsqueda global y hacer foco en un niño específico
+   */
+  const handleNavigateToTeam = (teamId: number, childId?: number) => {
     const team = getTeamForChild(teamId);
     if (team) {
       setGlobalSearchTerm(''); // Limpiar búsqueda
+      
+      // Si se especifica un niño, destacarlo
+      if (childId) {
+        highlightChild(childId, 5000); // 5 segundos para búsqueda desde menú principal
+      }
+      
       handleSelectTeam(team); // Navegar al equipo
     }
   };
@@ -215,6 +236,12 @@ function App() {
       await loadAllChildren();
       await loadChildren();
       
+      // 🎯 NUEVO: Destacar el niño recién agregado
+      setHighlightedChildId(newChild.id);
+      setTimeout(() => {
+        setHighlightedChildId(null);
+      }, 3000); // 3 segundos de destacado después de agregar
+      
       setAppState(prev => ({ ...prev, loading: false }));
     } catch (error) {
       console.error('Error al agregar niño:', error);
@@ -246,6 +273,12 @@ function App() {
       // Recargar para asegurar sincronización con el servidor
       await loadAllChildren();
       await loadChildren();
+      
+      // 🎯 NUEVO: Destacar el niño editado para mostrar que fue actualizado
+      setHighlightedChildId(id);
+      setTimeout(() => {
+        setHighlightedChildId(null);
+      }, 3000); // 3 segundos de destacado después de editar
       
       setAppState(prev => ({ ...prev, loading: false }));
     } catch (error) {
@@ -305,6 +338,14 @@ function App() {
       // Recargar para asegurar sincronización con el servidor
       await loadAllChildren();
       await loadChildren();
+      
+      // 🎯 NUEVO: Destacar el niño si fue movido AL equipo actual
+      if (newTeamId === appState.selectedTeam?.id) {
+        setHighlightedChildId(childId);
+        setTimeout(() => {
+          setHighlightedChildId(null);
+        }, 4000); // 4 segundos para movimientos (más tiempo para notarlo)
+      }
       
       setShowMoveModal(false);
       setChildToMove(null);
@@ -391,6 +432,7 @@ function App() {
           team={appState.selectedTeam}
           children={appState.children}
           teams={appState.teams}
+          highlightedChildId={highlightedChildId}
           onBack={handleBackToTeams}
           onAddChild={handleAddChild}
           onUpdateChild={handleUpdateChild}
@@ -494,7 +536,7 @@ function App() {
                         <div 
                           key={child.id} 
                           className="px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors group"
-                          onClick={() => handleNavigateToTeam(child.team_id)}
+                          onClick={() => handleNavigateToTeam(child.team_id, child.id)}
                           title={`Ir al equipo ${team?.nombre || 'desconocido'}`}
                         >
                           <div className="flex items-center justify-between">

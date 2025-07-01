@@ -15,6 +15,7 @@ export interface ChildListProps {
   team: Team;
   children: Child[];
   teams: Team[]; // Agregar esta prop
+  highlightedChildId?: number | null; // Nueva prop para destacar niño
   onBack: () => void;
   onAddChild: (childData: CreateChildData) => void;
   onUpdateChild: (id: number, childData: UpdateChildData) => void;
@@ -27,6 +28,7 @@ const ChildList: React.FC<ChildListProps> = React.memo(({
   team, 
   children,
   teams, // Nueva prop
+  highlightedChildId, // Nueva prop para destacar niño
   onBack, 
   onAddChild, 
   onUpdateChild, 
@@ -272,6 +274,7 @@ const ChildList: React.FC<ChildListProps> = React.memo(({
                   onDelete={handleDeleteClick}
                   onMove={handleMoveChild}
                   isEditing={editingChild?.id === child.id}
+                  isHighlighted={highlightedChildId === child.id}
                   onUpdate={handleUpdateChild}
                   onCancelEdit={handleCancelEdit}
                   teamColor={team.color}
