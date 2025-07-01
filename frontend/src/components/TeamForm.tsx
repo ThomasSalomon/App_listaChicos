@@ -1,6 +1,7 @@
 /**
  * TeamForm Component
  * Formulario para crear nuevos equipos - Tailwind Version
+ * OPTIMIZADO: React.memo para prevenir re-renders innecesarios
  */
 
 import React from 'react';
@@ -13,7 +14,7 @@ interface TeamFormData {
   color: string;
 }
 
-const TeamForm: React.FC<TeamFormProps> = ({ onSubmit, onCancel, isVisible }) => {
+const TeamForm: React.FC<TeamFormProps> = React.memo(({ onSubmit, onCancel, isVisible }) => {
   const {
     register,
     handleSubmit,
@@ -175,6 +176,9 @@ const TeamForm: React.FC<TeamFormProps> = ({ onSubmit, onCancel, isVisible }) =>
       </div>
     </div>
   );
-};
+});
+
+// Display name for debugging
+TeamForm.displayName = 'TeamForm';
 
 export default TeamForm;

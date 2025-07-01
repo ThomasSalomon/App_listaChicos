@@ -1,12 +1,13 @@
 /**
  * TeamCard Component
  * Tarjeta individual para mostrar información de un equipo - Tailwind Version
+ * OPTIMIZADO: React.memo para prevenir re-renders innecesarios
  */
 
 import React from 'react';
 import type { TeamCardProps } from '../types';
 
-const TeamCard: React.FC<TeamCardProps> = ({ team, onSelect, onDelete }) => {
+const TeamCard: React.FC<TeamCardProps> = React.memo(({ team, onSelect, onDelete }) => {
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevenir que se ejecute onSelect
     onDelete(team.id);
@@ -62,6 +63,9 @@ const TeamCard: React.FC<TeamCardProps> = ({ team, onSelect, onDelete }) => {
       />
     </div>
   );
-};
+});
+
+// Display name for debugging
+TeamCard.displayName = 'TeamCard';
 
 export default TeamCard;

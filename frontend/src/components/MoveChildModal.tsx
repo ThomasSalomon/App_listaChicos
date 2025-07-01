@@ -1,12 +1,13 @@
 /**
  * MoveChildModal Component
  * Modal para mover un niño a otro equipo
+ * OPTIMIZADO: React.memo para prevenir re-renders innecesarios
  */
 
 import React, { useState } from 'react';
 import type { MoveChildModalProps } from '../types';
 
-const MoveChildModal: React.FC<MoveChildModalProps> = ({ 
+const MoveChildModal: React.FC<MoveChildModalProps> = React.memo(({ 
   child, 
   teams, 
   currentTeamId, 
@@ -125,6 +126,9 @@ const MoveChildModal: React.FC<MoveChildModalProps> = ({
       </div>
     </div>
   );
-};
+});
+
+// Display name for debugging
+MoveChildModal.displayName = 'MoveChildModal';
 
 export default MoveChildModal;

@@ -1,6 +1,7 @@
 /**
  * ChildList Component
  * Componente contenedor para la gestión de niños de un equipo
+ * OPTIMIZADO: React.memo para prevenir re-renders innecesarios
  */
 
 import React, { useState } from 'react';
@@ -22,7 +23,7 @@ export interface ChildListProps {
   onClearAll: () => void;
 }
 
-const ChildList: React.FC<ChildListProps> = ({ 
+const ChildList: React.FC<ChildListProps> = React.memo(({ 
   team, 
   children,
   teams, // Nueva prop
@@ -308,6 +309,9 @@ const ChildList: React.FC<ChildListProps> = ({
       />
     </div>
   );
-};
+});
+
+// Display name for debugging
+ChildList.displayName = 'ChildList';
 
 export default ChildList;

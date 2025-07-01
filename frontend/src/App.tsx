@@ -200,9 +200,21 @@ function App() {
   const handleAddChild = async (childData: CreateChildData) => {
     try {
       setAppState(prev => ({ ...prev, loading: true }));
-      await childrenService.createChild(childData);
+      const newChild = await childrenService.createChild(childData);
+      
+      // OPTIMIZACIÓN: Actualización optimista local inmediata
+      setAllChildren(prevAll => [...prevAll, newChild]);
+      if (newChild.team_id === appState.selectedTeam?.id) {
+        setAppState(prev => ({ 
+          ...prev, 
+          children: [...prev.children, newChild]
+        }));
+      }
+      
+      // Recargar para asegurar sincronización con el servidor
+      await loadAllChildren();
       await loadChildren();
-      await loadAllChildren(); // Actualizar búsqueda global
+      
       setAppState(prev => ({ ...prev, loading: false }));
     } catch (error) {
       console.error('Error al agregar niño:', error);
@@ -217,12 +229,30 @@ function App() {
   const handleUpdateChild = async (id: number, childData: UpdateChildData) => {
     try {
       setAppState(prev => ({ ...prev, loading: true }));
+      
+      // OPTIMIZACIÓN: Actualización optimista local inmediata
+      setAllChildren(prevAll => prevAll.map(child => 
+        child.id === id ? { ...child, ...childData } : child
+      ));
+      setAppState(prev => ({ 
+        ...prev, 
+        children: prev.children.map(child => 
+          child.id === id ? { ...child, ...childData } : child
+        )
+      }));
+      
       await childrenService.updateChild(id, childData);
+      
+      // Recargar para asegurar sincronización con el servidor
+      await loadAllChildren();
       await loadChildren();
-      await loadAllChildren(); // Actualizar búsqueda global
+      
       setAppState(prev => ({ ...prev, loading: false }));
     } catch (error) {
       console.error('Error al actualizar niño:', error);
+      // Revertir cambios optimistas en caso de error
+      await loadAllChildren();
+      await loadChildren();
       setAppState(prev => ({ 
         ...prev, 
         loading: false, 
@@ -234,12 +264,26 @@ function App() {
   const handleDeleteChild = async (childId: number) => {
     try {
       setAppState(prev => ({ ...prev, loading: true }));
+      
+      // OPTIMIZACIÓN: Actualización optimista local inmediata
+      setAllChildren(prevAll => prevAll.filter(child => child.id !== childId));
+      setAppState(prev => ({ 
+        ...prev, 
+        children: prev.children.filter(child => child.id !== childId)
+      }));
+      
       await childrenService.deleteChild(childId);
+      
+      // Recargar para asegurar sincronización con el servidor
+      await loadAllChildren();
       await loadChildren();
-      await loadAllChildren(); // Actualizar búsqueda global
+      
       setAppState(prev => ({ ...prev, loading: false }));
     } catch (error) {
       console.error('Error al eliminar niño:', error);
+      // Revertir cambios optimistas en caso de error
+      await loadAllChildren();
+      await loadChildren();
       setAppState(prev => ({ 
         ...prev, 
         loading: false, 
@@ -250,14 +294,26 @@ function App() {
   const confirmMoveChild = async (childId: number, newTeamId: number) => {
     try {
       setAppState(prev => ({ ...prev, loading: true }));
+      
+      // OPTIMIZACIÓN: Actualización optimista local inmediata
+      setAllChildren(prevAll => prevAll.map(child => 
+        child.id === childId ? { ...child, team_id: newTeamId } : child
+      ));
+      
       await childrenService.moveChildToTeam(childId, { new_team_id: newTeamId });
+      
+      // Recargar para asegurar sincronización con el servidor
+      await loadAllChildren();
       await loadChildren();
-      await loadAllChildren(); // Actualizar búsqueda global
+      
       setShowMoveModal(false);
       setChildToMove(null);
       setAppState(prev => ({ ...prev, loading: false }));
     } catch (error) {
       console.error('Error al mover niño:', error);
+      // Revertir cambios optimistas en caso de error
+      await loadAllChildren();
+      await loadChildren();
       setAppState(prev => ({ 
         ...prev, 
         loading: false, 

@@ -1,12 +1,13 @@
 /**
  * ConfirmDialog Component
  * Modal de confirmación reutilizable
+ * OPTIMIZADO: React.memo para prevenir re-renders innecesarios
  */
 
 import React from 'react';
 import type { ConfirmDialogProps } from '../types';
 
-const ConfirmDialog: React.FC<ConfirmDialogProps> = ({ 
+const ConfirmDialog: React.FC<ConfirmDialogProps> = React.memo(({ 
   isVisible, 
   title, 
   message, 
@@ -65,6 +66,9 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       </div>
     </div>
   );
-};
+});
+
+// Display name for debugging
+ConfirmDialog.displayName = 'ConfirmDialog';
 
 export default ConfirmDialog;

@@ -1,6 +1,7 @@
 /**
  * ChildForm Component
  * Formulario para agregar nuevos niños a un equipo
+ * OPTIMIZADO: React.memo para prevenir re-renders innecesarios
  */
 
 import React from 'react';
@@ -17,7 +18,7 @@ interface ChildFormData {
   condicion_pago: 'Al dia' | 'En deuda';
 }
 
-const ChildForm: React.FC<ChildFormProps> = ({ teamId, teamColor, onSubmit, isVisible }) => {
+const ChildForm: React.FC<ChildFormProps> = React.memo(({ teamId, teamColor, onSubmit, isVisible }) => {
   const {
     register,
     handleSubmit,
@@ -235,6 +236,9 @@ const ChildForm: React.FC<ChildFormProps> = ({ teamId, teamColor, onSubmit, isVi
       </div>
     </div>
   );
-};
+});
+
+// Display name for debugging
+ChildForm.displayName = 'ChildForm';
 
 export default ChildForm;

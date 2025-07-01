@@ -10,3 +10,4 @@ export { default as ChildForm } from './ChildForm';
 export { default as ChildItem } from './ChildItem';
 export { default as MoveChildModal } from './MoveChildModal';
 export { default as ConfirmDialog } from './ConfirmDialog';
+export { default as VirtualizedChildList } from './VirtualizedChildList';

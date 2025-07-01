@@ -1,6 +1,7 @@
 /**
  * ChildItem Component
  * Componente individual para mostrar y editar información de un niño
+ * OPTIMIZADO: React.memo para prevenir re-renders innecesarios
  */
 
 import React, { useState, useEffect } from 'react';
@@ -8,7 +9,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import type { ChildItemProps } from '../types';
 
-const ChildItem: React.FC<ChildItemProps> = ({ 
+const ChildItem: React.FC<ChildItemProps> = React.memo(({ 
   child, 
   onEdit, 
   onDelete, 
@@ -273,6 +274,9 @@ const ChildItem: React.FC<ChildItemProps> = ({
       </div>
     </div>
   );
-};
+});
+
+// Display name for debugging
+ChildItem.displayName = 'ChildItem';
 
 export default ChildItem;
