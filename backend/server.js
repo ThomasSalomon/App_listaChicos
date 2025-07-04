@@ -9,6 +9,8 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const https = require('https');
+const fs = require('fs');
 
 // Configuración de la aplicación
 const config = require('./config/app');
@@ -212,14 +214,40 @@ class Server {  constructor() {
       
       return new Promise((resolve, reject) => {
         try {
-          const server = this.app.listen(this.port, config.server.host, () => {
+          // Verificar si existen certificados SSL
+          const sslKeyPath = path.join(__dirname, '..', 'frontend', 'certs', 'key.pem');
+          const sslCertPath = path.join(__dirname, '..', 'frontend', 'certs', 'cert.pem');
+          
+          let server;
+          let protocol = 'http';
+          
+          if (fs.existsSync(sslKeyPath) && fs.existsSync(sslCertPath)) {
+            // Configurar HTTPS
+            const httpsOptions = {
+              key: fs.readFileSync(sslKeyPath),
+              cert: fs.readFileSync(sslCertPath)
+            };
+            
+            server = https.createServer(httpsOptions, this.app);
+            protocol = 'https';
+            console.log('🔒 Certificados SSL encontrados. Iniciando servidor HTTPS...');
+          } else {
+            // Usar HTTP normal
+            server = this.app;
+            console.log('📡 No se encontraron certificados SSL. Iniciando servidor HTTP...');
+          }
+          
+          server.listen(this.port, config.server.host, () => {
             console.log('\n🚀 =====================================');
             console.log(`📊 Lista de Chicos API Server`);
-            console.log(`🌐 Servidor: http://${config.server.host}:${this.port}`);
-            console.log(`📡 API: http://${config.server.host}:${this.port}/api`);
-            console.log(`🏥 Health: http://${config.server.host}:${this.port}/api/health`);
+            console.log(`🌐 Servidor: ${protocol}://${config.server.host}:${this.port}`);
+            console.log(`📡 API: ${protocol}://${config.server.host}:${this.port}/api`);
+            console.log(`🏥 Health: ${protocol}://${config.server.host}:${this.port}/api/health`);
             console.log(`🔧 Ambiente: ${config.server.env}`);
             console.log(`📊 Versión: ${config.api.version}`);
+            if (protocol === 'https') {
+              console.log('🔒 SSL/TLS: Habilitado (Certificados auto-firmados)');
+            }
             console.log('🚀 =====================================\n');
             
             resolve(server);

@@ -9,7 +9,24 @@ Una aplicación de escritorio moderna para gestionar listas de niños, construid
 - **Optimización**: React.memo, useCallback, useMemo, Custom Hooks
 - **Backend**: Node.js + Express + SQLite
 - **Desktop**: Electron
+- **Network**: Acceso remoto en red local para pruebas
 - **Herramientas**: ESLint, Prettier, Tailwind CSS IntelliSense
+
+## 🌐 Capacidades de Red
+
+### 📱 Modo Network para Testing
+- ✅ **Acceso Remoto**: Ejecuta `npm run dev:network` para permitir conexiones desde otros dispositivos
+- 📲 **Testing Móvil**: Prueba la aplicación directamente desde móviles y tablets
+- 🔗 **Misma Red WiFi**: Acceso desde cualquier dispositivo en la misma red local
+- 🚀 **URLs Dinámicas**: Frontend en puerto 3000, Backend en puerto 3001
+- 🛡️ **CORS Configurado**: Permite conexiones desde rangos de IP locales
+- ⚡ **Hot Reload**: Cambios en tiempo real visibles desde todos los dispositivos conectados
+
+### 🎯 Casos de Uso
+- 🧪 **Testing Multiplataforma**: Verificar responsive design en dispositivos reales
+- 👥 **Demos en Vivo**: Mostrar la aplicación a múltiples personas simultáneamente
+- 🔍 **Debug Remoto**: Desarrollar desde PC y probar en móvil instantáneamente
+- 📊 **UX Research**: Evaluar experiencia de usuario en diferentes pantallas
 
 ### 🏆 Gestión de Equipos
 - ✅ **Crear Equipos**: Botón flotante moderno para crear nuevos equipos
@@ -222,6 +239,76 @@ npm run dev:backend    # Solo backend (API Server)
 npm run dev:frontend   # Solo frontend (React + Vite)
 npm run dev:electron   # Solo Electron
 ```
+
+#### 🌐 Modo Network para Pruebas Remotas
+```bash
+# Ejecutar en Modo Network (Acceso desde otros dispositivos)
+npm run dev:network
+# Inicia: Backend (0.0.0.0:3001) + Frontend (0.0.0.0:3000)
+# Permite acceso desde móviles, tablets y otras computadoras en la misma red WiFi
+
+# Comandos individuales para Network
+npm run dev:backend:network   # Solo backend en modo network
+npm run dev:frontend:network  # Solo frontend en modo network
+```
+
+##### 📱 Acceso desde Dispositivos Externos
+1. **Ejecutar**: `npm run dev:network` desde tu computadora
+2. **Obtener IP**: Ejecutar `ipconfig` (Windows) o `ifconfig` (Mac/Linux)
+3. **Acceder desde cualquier dispositivo**: 
+   - Navegador: `http://TU_IP:3000` (ejemplo: `http://192.168.1.104:3000`)
+   - Mismo comportamiento que la aplicación de escritorio
+   - Funciona desde móviles, tablets, otras computadoras
+4. **Requisitos**: 
+   - Dispositivos en la misma red WiFi
+   - Firewall configurado para permitir puertos 3000 y 3001
+
+##### 🔧 Configuración de Firewall (Windows)
+```bash
+# Verificar puertos en uso
+netstat -ano | findstr :3000
+netstat -ano | findstr :3001
+
+# Si hay problemas de conexión:
+# 1. Windows Defender Firewall → Permitir una aplicación
+# 2. Buscar "Node.js" y marcar ambas casillas (Privada y Pública)
+# 3. O crear reglas específicas para puertos 3000 y 3001
+```
+
+##### ✨ Casos de Uso del Modo Network
+- 🧪 **Testing**: Probar la aplicación en dispositivos reales
+- 📱 **Demo**: Mostrar la aplicación a otros desde sus propios dispositivos
+- 👥 **Colaboración**: Múltiples desarrolladores trabajando en la misma instancia
+- 🔍 **Debug**: Verificar responsive design en dispositivos móviles reales
+- 🎯 **UX Testing**: Evaluar la experiencia de usuario en diferentes pantallas
+
+##### 🌐 Testing Remoto con Túneles Públicos
+
+Para probar desde cualquier red (no solo WiFi local), usa ngrok:
+
+**⚠️ Configuración inicial requerida:**
+1. Instalar [ngrok](https://ngrok.com/download)
+2. Crear cuenta gratuita en [ngrok.com](https://ngrok.com/signup)
+3. Configurar authtoken: `ngrok config add-authtoken TU_TOKEN`
+
+**Scripts automatizados:**
+```bash
+# Script que verifica configuración y crea túneles
+expose-public.bat   # Crea URLs públicas temporales
+
+# Script auxiliar para configurar backend
+config-api.bat      # Configura URL del backend (opción 3 para ngrok)
+```
+
+**URLs públicas temporales:**
+- Frontend: `https://abc123.ngrok.io` (accesible desde cualquier red)
+- Backend: `https://xyz789.ngrok.io` (para API calls)
+- Ideal para demos, testing remoto y colaboración
+
+**Limitaciones cuenta gratuita:**
+- URLs cambian en cada ejecución
+- Límite de conexiones simultáneas
+- Para URLs permanentes: considera ngrok Pro o deploy en cloud
 
 #### 4. Construcción y Distribución
 ```bash
@@ -694,6 +781,43 @@ cd backend/utils
 - ✅ Respaldar base de datos: `backend/database/children.sqlite`
 - ✅ Eliminar base de datos antigua para recrear esquema
 - ✅ Reiniciar aplicación para migración automática
+
+## 🚀 Referencia Rápida de Comandos
+
+### 💻 Desarrollo Local
+```bash
+npm run dev                    # Desarrollo completo (Backend + Frontend + Electron)
+npm run dev:backend           # Solo backend (puerto 3001)
+npm run dev:frontend          # Solo frontend (puerto 3000)
+```
+
+### 🌐 Desarrollo en Red (Testing Remoto)
+```bash
+npm run dev:network           # Backend + Frontend accesibles desde red local
+npm run dev:backend:network   # Solo backend en modo network (0.0.0.0:3001)
+npm run dev:frontend:network  # Solo frontend en modo network (0.0.0.0:3000)
+```
+
+### 📦 Construcción y Distribución
+```bash
+npm run build                 # Construir para producción
+npm run dist:installer        # Crear instalador NSIS
+npm run dist:portable         # Crear versión portable
+npm run dist:both            # Crear ambas versiones
+```
+
+### 🔗 URLs de Acceso
+- **Local**: `http://localhost:3000` (frontend), `http://localhost:3001` (backend)
+- **Network**: `http://TU_IP:3000` (frontend), `http://TU_IP:3001` (backend)
+- **Ejemplo**: `http://192.168.1.104:3000`
+
+### 🛠️ Herramientas Útiles
+```bash
+ipconfig                      # Ver IP local (Windows)
+ifconfig                      # Ver IP local (Mac/Linux)
+netstat -ano | findstr :3000  # Ver procesos usando puerto 3000
+netstat -ano | findstr :3001  # Ver procesos usando puerto 3001
+```
 
 ## 🤝 Contribuir
 

@@ -8,6 +8,13 @@ dist-installer/
 build/
 out/
 
+# SSL Certificates (auto-generated, not for version control)
+frontend/certs/
+*.pem
+*.key
+*.crt
+*.cert
+
 # Electron build files
 *.exe
 *.dmg

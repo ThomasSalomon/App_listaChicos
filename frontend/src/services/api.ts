@@ -5,8 +5,23 @@
 
 import axios from 'axios';
 
-// Configuración base de axios
-const API_BASE_URL = 'http://localhost:3001/api';
+// Configuración dinámica de la URL base
+const getApiBaseUrl = (): string => {
+  // 1. Usar variable de entorno si está definida
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return `${import.meta.env.VITE_API_BASE_URL}/api`;
+  }
+  
+  // 2. Detectar automáticamente según el protocolo del frontend
+  const protocol = window.location.protocol; // 'http:' o 'https:'
+  const hostname = window.location.hostname; // 'localhost' o IP
+  
+  // Si el frontend está en HTTPS, usar HTTPS para el backend también
+  const backendPort = 3001;
+  return `${protocol}//${hostname}:${backendPort}/api`;
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Crear instancia de axios con configuración base
 export const apiClient = axios.create({
@@ -15,12 +30,23 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  // Para desarrollo: aceptar certificados auto-firmados
+  ...(API_BASE_URL.startsWith('https://localhost') && {
+    validateStatus: () => true, // Aceptar cualquier status para debugging
+  })
+});
+
+// Log de configuración para debugging
+console.log('🔧 API Configuration:', {
+  baseURL: API_BASE_URL,
+  protocol: window.location.protocol,
+  hostname: window.location.hostname
 });
 
 // Interceptor para requests (opcional - para logging)
 apiClient.interceptors.request.use(
   (config) => {
-    console.log(`🚀 ${config.method?.toUpperCase()} ${config.url}`);
+    console.log(`🚀 ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
     return config;
   },
   (error) => {
