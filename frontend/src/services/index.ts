@@ -5,6 +5,7 @@
 
 export { teamsService } from './teamsService';
 export { childrenService } from './childrenService';
+export { importExportService } from './importExportService';
 export { apiClient } from './api';
 
 // Re-exportar defaults

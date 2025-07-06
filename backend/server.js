@@ -24,6 +24,7 @@ const { sanitizeStrings } = require('./middleware/validation');
 // Rutas
 const childrenRoutes = require('./routes/children');
 const teamsRoutes = require('./routes/teams');
+const importRoutes = require('./routes/import');
 
 // Utilidades
 const { formatDuration } = require('./utils/helpers');
@@ -120,6 +121,9 @@ class Server {  constructor() {
 
     // Rutas de equipos
     this.app.use('/api/teams', teamsRoutes);
+
+    // Rutas de importación/exportación
+    this.app.use('/api/import', importRoutes);
 
     // Ruta raíz
     this.app.get('/', (req, res) => {

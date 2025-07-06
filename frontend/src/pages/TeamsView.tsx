@@ -3,14 +3,16 @@
  * Maneja la visualización y gestión de equipos
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import TeamCard from '../components/TeamCard';
 import TeamForm from '../components/TeamForm';
 import ConfirmDialog from '../components/ConfirmDialog';
 import GlobalSearch from '../components/GlobalSearch';
+import { ImportModal, ExportMenu } from '../components';
 import { useTeamOperations } from '../hooks/useTeamOperations';
 import { useUI } from '../contexts/UIContext';
 import { useApp } from '../contexts/AppContext';
+import { useTeams } from '../contexts/TeamsContext';
 
 const TeamsView: React.FC = () => {
   const { 
@@ -22,6 +24,9 @@ const TeamsView: React.FC = () => {
     confirmDeleteTeam 
   } = useTeamOperations();
   
+  const { loadTeams } = useTeams();
+  const [showImportModal, setShowImportModal] = useState(false);
+  
   const { 
     showDeleteTeamConfirm, 
     closeDeleteTeamConfirm,
@@ -30,6 +35,11 @@ const TeamsView: React.FC = () => {
   } = useUI();
   
   const { navigateToTeam } = useApp();
+
+  const handleImportSuccess = () => {
+    loadTeams();
+    setShowImportModal(false);
+  };
 
   const handleExit = () => {
     setShowExitConfirm(true);
@@ -63,9 +73,9 @@ const TeamsView: React.FC = () => {
 
         {/* Main Content */}
         <main className="space-y-8">
-          {/* Botón crear equipo flotante */}
+          {/* Botones de acción principales */}
           {!showTeamForm && (
-            <div className="text-center">
+            <div className="text-center space-y-4">
               <button 
                 className="btn-primary inline-flex items-center px-6 py-3 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
                 onClick={() => setShowTeamForm(true)}
@@ -75,6 +85,21 @@ const TeamsView: React.FC = () => {
                 </svg>
                 Crear Nuevo Equipo
               </button>
+              
+              {/* Botones de importación/exportación */}
+              <div className="flex justify-center items-center space-x-4 pt-4">
+                <button
+                  onClick={() => setShowImportModal(true)}
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                >
+                  <span>📥</span>
+                  <span>Importar Equipos</span>
+                </button>
+                
+                <ExportMenu type="teams" />
+                
+                <ExportMenu type="report" />
+              </div>
             </div>
           )}
 
@@ -140,6 +165,13 @@ const TeamsView: React.FC = () => {
         message="¿Estás seguro de que quieres cerrar la aplicación?"
         onConfirm={confirmExit}
         onCancel={() => setShowExitConfirm(false)}
+      />
+
+      <ImportModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        type="teams"
+        onSuccess={handleImportSuccess}
       />
     </div>
   );

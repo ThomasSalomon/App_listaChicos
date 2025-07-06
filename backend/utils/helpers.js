@@ -244,6 +244,99 @@ const throttle = (func, limit) => {
   };
 };
 
+/**
+ * Valida datos de un niño para importación
+ */
+const validateChild = (childData) => {
+  const errors = [];
+  
+  // Validar nombre
+  if (!childData.name || typeof childData.name !== 'string') {
+    errors.push('Nombre es requerido');
+  } else {
+    const name = childData.name.trim();
+    if (name.length < 2) {
+      errors.push('El nombre debe tener al menos 2 caracteres');
+    }
+    if (name.length > 100) {
+      errors.push('El nombre no puede tener más de 100 caracteres');
+    }
+    if (!isValidName(name)) {
+      errors.push('El nombre contiene caracteres no válidos');
+    }
+  }
+  
+  // Validar edad (opcional)
+  if (childData.age !== null && childData.age !== undefined) {
+    const age = parseInt(childData.age);
+    if (isNaN(age) || age < 1 || age > 100) {
+      errors.push('La edad debe ser un número entre 1 y 100');
+    }
+  }
+  
+  // Validar notas (opcional)
+  if (childData.notes && childData.notes.length > 500) {
+    errors.push('Las notas no pueden tener más de 500 caracteres');
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
+/**
+ * Valida datos de un equipo para importación
+ */
+const validateTeam = (teamData) => {
+  const errors = [];
+  
+  // Validar nombre
+  if (!teamData.name || typeof teamData.name !== 'string') {
+    errors.push('Nombre del equipo es requerido');
+  } else {
+    const name = teamData.name.trim();
+    if (name.length < 2) {
+      errors.push('El nombre del equipo debe tener al menos 2 caracteres');
+    }
+    if (name.length > 50) {
+      errors.push('El nombre del equipo no puede tener más de 50 caracteres');
+    }
+  }
+  
+  // Validar color (opcional)
+  if (teamData.color) {
+    if (!/^#[0-9A-F]{6}$/i.test(teamData.color)) {
+      errors.push('El color debe estar en formato hexadecimal (#RRGGBB)');
+    }
+  }
+  
+  // Validar descripción (opcional)
+  if (teamData.description && teamData.description.length > 255) {
+    errors.push('La descripción no puede tener más de 255 caracteres');
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
+/**
+ * Limpia y normaliza texto para importación
+ */
+const cleanImportText = (text) => {
+  if (!text || typeof text !== 'string') {
+    return '';
+  }
+  
+  return text
+    .trim()
+    .replace(/\s+/g, ' ') // Múltiples espacios a uno solo
+    .replace(/[^\w\s\-áéíóúñüÁÉÍÓÚÑÜ]/g, '') // Solo letras, números, espacios y acentos
+    .substring(0, 100); // Limitar longitud
+};
+
 module.exports = {
   generateUUID,
   formatNumber,
@@ -260,5 +353,8 @@ module.exports = {
   calculateAgeStats,
   formatDuration,
   debounce,
-  throttle
+  throttle,
+  validateChild,
+  validateTeam,
+  cleanImportText
 };
