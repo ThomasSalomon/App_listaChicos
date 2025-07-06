@@ -166,7 +166,7 @@ router.get('/info', (req, res) => {
  * @query format - Formato de exportación: 'excel' o 'csv' (default: excel)
  * @query teamId - ID del equipo para filtrar (opcional)
  */
-router.get('/export/children', exportController.exportChildren);
+router.get('/export/children', (req, res) => exportController.exportChildren(req, res));
 
 /**
  * @route GET /api/import/export/teams
@@ -175,7 +175,7 @@ router.get('/export/children', exportController.exportChildren);
  * @query format - Formato de exportación: 'excel' o 'csv' (default: excel)
  * @query includeChildren - Incluir niños en cada equipo: 'true' o 'false' (default: false)
  */
-router.get('/export/teams', exportController.exportTeams);
+router.get('/export/teams', (req, res) => exportController.exportTeams(req, res));
 
 /**
  * @route GET /api/import/export/report
@@ -183,7 +183,7 @@ router.get('/export/teams', exportController.exportTeams);
  * @access Public
  * @query format - Formato de exportación: 'excel' o 'csv' (default: excel)
  */
-router.get('/export/report', exportController.exportCompleteReport);
+router.get('/export/report', (req, res) => exportController.exportCompleteReport(req, res));
 
 /**
  * @route GET /api/import/export/info

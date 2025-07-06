@@ -52,10 +52,11 @@ class ExportController {
       const children = await this.executeQuery(`
         SELECT 
           c.id,
-          c.nombre as name,
-          c.edad as age,
-          c.fecha_nacimiento as birth_date,
-          c.notas as notes,
+          c.nombre,
+          c.apellido,
+          c.fecha_nacimiento,
+          c.estado_fisico,
+          c.condicion_pago,
           c.created_at,
           c.updated_at,
           t.nombre as team_name,
@@ -104,10 +105,11 @@ class ExportController {
       const children = await this.executeQuery(`
         SELECT 
           c.id,
-          c.nombre as name,
-          c.edad as age,
-          c.fecha_nacimiento as birth_date,
-          c.notas as notes,
+          c.nombre,
+          c.apellido,
+          c.fecha_nacimiento,
+          c.estado_fisico,
+          c.condicion_pago,
           c.created_at,
           c.updated_at,
           t.nombre as team_name,
@@ -196,10 +198,11 @@ class ExportController {
         this.executeQuery(`
           SELECT 
             c.id,
-            c.nombre as name,
-            c.edad as age,
-            c.fecha_nacimiento as birth_date,
-            c.notas as notes,
+            c.nombre,
+            c.apellido,
+            c.fecha_nacimiento,
+            c.estado_fisico,
+            c.condicion_pago,
             c.created_at,
             c.updated_at,
             t.nombre as team_name,
@@ -211,10 +214,10 @@ class ExportController {
         this.executeQuery(`
           SELECT 
             t.id,
-            t.nombre as name,
-            t.descripcion as description,
+            t.nombre,
+            t.descripcion,
             t.color,
-            t.activo as active,
+            t.activo,
             t.created_at,
             t.updated_at,
             COUNT(c.id) as children_count
@@ -228,12 +231,9 @@ class ExportController {
           SELECT 
             COUNT(DISTINCT t.id) as total_teams,
             COUNT(c.id) as total_children,
-            COUNT(CASE WHEN c.edad IS NOT NULL THEN 1 END) as children_with_age,
+            COUNT(CASE WHEN c.fecha_nacimiento IS NOT NULL THEN 1 END) as children_with_birthdate,
             COUNT(CASE WHEN c.team_id IS NOT NULL THEN 1 END) as children_with_team,
-            COUNT(CASE WHEN c.team_id IS NULL THEN 1 END) as children_without_team,
-            AVG(CASE WHEN c.edad IS NOT NULL THEN c.edad END) as avg_age,
-            MIN(CASE WHEN c.edad IS NOT NULL THEN c.edad END) as min_age,
-            MAX(CASE WHEN c.edad IS NOT NULL THEN c.edad END) as max_age
+            COUNT(CASE WHEN c.team_id IS NULL THEN 1 END) as children_without_team
           FROM children c
           LEFT JOIN teams t ON c.team_id = t.id
         `)
@@ -265,9 +265,10 @@ class ExportController {
       const children = await this.executeQuery(`
         SELECT 
           c.nombre as "Nombre",
-          c.edad as "Edad",
+          c.apellido as "Apellido",
           c.fecha_nacimiento as "Fecha Nacimiento",
-          c.notas as "Notas",
+          c.estado_fisico as "Estado Físico",
+          c.condicion_pago as "Condición Pago",
           t.nombre as "Equipo",
           c.created_at as "Fecha Registro"
         FROM children c
@@ -304,16 +305,21 @@ class ExportController {
    */
   generateChildrenExcel(children, sheetName = 'Niños') {
     // Preparar datos para Excel
-    const excelData = children.map(child => ({
-      'ID': child.id,
-      'Nombre': child.name,
-      'Edad': child.age,
-      'Fecha Nacimiento': child.birth_date ? formatDate(new Date(child.birth_date)) : '',
-      'Equipo': child.team_name || 'Sin equipo',
-      'Color Equipo': child.team_color || '',
-      'Notas': child.notes || '',
-      'Fecha Registro': formatDate(new Date(child.created_at))
-    }));
+    const excelData = children.map(child => {
+      const edad = calculateAge(child.fecha_nacimiento);
+      return {
+        'ID': child.id,
+        'Nombre': child.nombre,
+        'Apellido': child.apellido,
+        'Edad': edad,
+        'Fecha Nacimiento': child.fecha_nacimiento ? formatDate(new Date(child.fecha_nacimiento)) : '',
+        'Estado Físico': child.estado_fisico || '',
+        'Condición Pago': child.condicion_pago || '',
+        'Equipo': child.team_name || 'Sin equipo',
+        'Color Equipo': child.team_color || '',
+        'Fecha Registro': formatDate(new Date(child.created_at))
+      };
+    });
 
     // Crear workbook
     const workbook = XLSX.utils.book_new();
@@ -364,14 +370,9 @@ class ExportController {
       [''],
       ['Total de equipos:', stats.total_teams],
       ['Total de niños:', stats.total_children],
-      ['Con edad registrada:', stats.children_with_age],
+      ['Con fecha de nacimiento:', stats.children_with_birthdate],
       ['Con equipo asignado:', stats.children_with_team],
       ['Sin equipo:', stats.children_without_team],
-      [''],
-      ['EDADES'],
-      ['Edad promedio:', stats.avg_age ? stats.avg_age.toFixed(1) : 'N/A'],
-      ['Edad mínima:', stats.min_age || 'N/A'],
-      ['Edad máxima:', stats.max_age || 'N/A'],
       [''],
       ['Reporte generado:', formatDate(new Date(), true)]
     ];
@@ -383,11 +384,11 @@ class ExportController {
     if (teams.length > 0) {
       const teamsData = teams.map(team => ({
         'ID': team.id,
-        'Nombre': team.name,
-        'Descripción': team.description || '',
+        'Nombre': team.nombre,
+        'Descripción': team.descripcion || '',
         'Color': team.color,
         'Niños Registrados': team.children_count,
-        'Estado': team.active ? 'Activo' : 'Inactivo',
+        'Estado': team.activo ? 'Activo' : 'Inactivo',
         'Fecha Creación': formatDate(new Date(team.created_at))
       }));
       const teamsSheet = XLSX.utils.json_to_sheet(teamsData);
@@ -396,16 +397,21 @@ class ExportController {
 
     // Hoja 3: Niños
     if (children.length > 0) {
-      const childrenData = children.map(child => ({
-        'ID': child.id,
-        'Nombre': child.name,
-        'Edad': child.age,
-        'Fecha Nacimiento': child.birth_date ? formatDate(new Date(child.birth_date)) : '',
-        'Equipo': child.team_name || 'Sin equipo',
-        'Color Equipo': child.team_color || '',
-        'Notas': child.notes || '',
-        'Fecha Registro': formatDate(new Date(child.created_at))
-      }));
+      const childrenData = children.map(child => {
+        const edad = calculateAge(child.fecha_nacimiento);
+        return {
+          'ID': child.id,
+          'Nombre': child.nombre,
+          'Apellido': child.apellido,
+          'Edad': edad,
+          'Fecha Nacimiento': child.fecha_nacimiento ? formatDate(new Date(child.fecha_nacimiento)) : '',
+          'Estado Físico': child.estado_fisico || '',
+          'Condición Pago': child.condicion_pago || '',
+          'Equipo': child.team_name || 'Sin equipo',
+          'Color Equipo': child.team_color || '',
+          'Fecha Registro': formatDate(new Date(child.created_at))
+        };
+      });
       const childrenSheet = XLSX.utils.json_to_sheet(childrenData);
       XLSX.utils.book_append_sheet(workbook, childrenSheet, 'Niños');
     }
