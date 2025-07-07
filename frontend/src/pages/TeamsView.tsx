@@ -87,7 +87,7 @@ const TeamsView: React.FC = () => {
               </button>
               
               {/* Botones de importación/exportación */}
-              <div className="flex justify-center items-center space-x-4 pt-4">
+              <div className="flex justify-center items-center space-x-8 pt-4">
                 <button
                   onClick={() => setShowImportModal(true)}
                   className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
@@ -97,6 +97,8 @@ const TeamsView: React.FC = () => {
                 </button>
                 
                 <ExportMenu type="teams" />
+                
+                <ExportMenu type="children" />
                 
                 <ExportMenu type="report" />
               </div>

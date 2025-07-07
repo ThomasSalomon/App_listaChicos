@@ -10,6 +10,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const https = require('https');
+const http = require('http');
 const fs = require('fs');
 
 // Configuración de la aplicación
@@ -33,6 +34,8 @@ class Server {  constructor() {
     this.app = express();
     this.port = config.server.port;
     this.startTime = Date.now();
+    this.server = null;
+    this.isShuttingDown = false;
     
     // No inicializar la base de datos aquí - se hará en start()
     this.initializeMiddleware();
@@ -222,7 +225,6 @@ class Server {  constructor() {
           const sslKeyPath = path.join(__dirname, '..', 'frontend', 'certs', 'key.pem');
           const sslCertPath = path.join(__dirname, '..', 'frontend', 'certs', 'cert.pem');
           
-          let server;
           let protocol = 'http';
           
           if (fs.existsSync(sslKeyPath) && fs.existsSync(sslCertPath)) {
@@ -232,16 +234,16 @@ class Server {  constructor() {
               cert: fs.readFileSync(sslCertPath)
             };
             
-            server = https.createServer(httpsOptions, this.app);
+            this.server = https.createServer(httpsOptions, this.app);
             protocol = 'https';
             console.log('🔒 Certificados SSL encontrados. Iniciando servidor HTTPS...');
           } else {
             // Usar HTTP normal
-            server = this.app;
+            this.server = http.createServer(this.app);
             console.log('📡 No se encontraron certificados SSL. Iniciando servidor HTTP...');
           }
           
-          server.listen(this.port, config.server.host, () => {
+          this.server.listen(this.port, config.server.host, () => {
             console.log('\n🚀 =====================================');
             console.log(`📊 Lista de Chicos API Server`);
             console.log(`🌐 Servidor: ${protocol}://${config.server.host}:${this.port}`);
@@ -254,16 +256,16 @@ class Server {  constructor() {
             }
             console.log('🚀 =====================================\n');
             
-            resolve(server);
+            resolve(this.server);
           });
 
-          server.on('error', (error) => {
+          this.server.on('error', (error) => {
             console.error('❌ Error al iniciar el servidor:', error.message);
             reject(error);
           });
 
           // Graceful shutdown
-          this.setupGracefulShutdown(server);
+          this.setupGracefulShutdown();
 
         } catch (error) {
           console.error('❌ Error al configurar el servidor:', error.message);
@@ -279,37 +281,63 @@ class Server {  constructor() {
   /**
    * Configura el cierre elegante del servidor
    */
-  setupGracefulShutdown(server) {
+  setupGracefulShutdown() {
     const shutdown = async (signal) => {
+      // Prevenir múltiples llamadas a shutdown
+      if (this.isShuttingDown) {
+        console.log('⚠️ Ya se está procesando el cierre del servidor...');
+        return;
+      }
+      
+      this.isShuttingDown = true;
       console.log(`\n🔄 Recibida señal ${signal}, cerrando servidor...`);
       
-      // Cerrar servidor HTTP
-      server.close(async () => {
-        console.log('✅ Servidor HTTP cerrado');
+      try {
+        // Cerrar servidor HTTP
+        if (this.server && typeof this.server.close === 'function') {
+          await new Promise((resolve, reject) => {
+            const closeTimeout = setTimeout(() => {
+              console.log('⚠️ Timeout al cerrar servidor, forzando cierre...');
+              resolve();
+            }, 5000);
+            
+            this.server.close((err) => {
+              clearTimeout(closeTimeout);
+              if (err) {
+                console.error('❌ Error al cerrar servidor HTTP:', err.message);
+                reject(err);
+              } else {
+                console.log('✅ Servidor HTTP cerrado');
+                resolve();
+              }
+            });
+          });
+        }
         
+        // Cerrar base de datos
         try {
-          // Cerrar base de datos
           await Database.close();
           console.log('✅ Base de datos cerrada correctamente');
-          
-          console.log('✅ Cierre completo del servidor');
-          process.exit(0);
-        } catch (error) {
-          console.error('❌ Error durante el cierre:', error.message);
-          process.exit(1);
+        } catch (dbError) {
+          console.error('⚠️ Error al cerrar base de datos:', dbError.message);
         }
-      });
-
-      // Forzar cierre después de 10 segundos
-      setTimeout(() => {
-        console.error('❌ Forzando cierre del servidor...');
+        
+        console.log('✅ Cierre completo del servidor');
+        process.exit(0);
+      } catch (error) {
+        console.error('❌ Error durante el cierre:', error.message);
         process.exit(1);
-      }, 10000);
+      }
     };
 
     // Capturar señales de terminación
-    process.on('SIGTERM', () => shutdown('SIGTERM'));
-    process.on('SIGINT', () => shutdown('SIGINT'));
+    process.on('SIGTERM', () => {
+      shutdown('SIGTERM');
+    });
+    
+    process.on('SIGINT', () => {
+      shutdown('SIGINT');
+    });
     
     // Capturar errores no manejados
     process.on('uncaughtException', (error) => {
