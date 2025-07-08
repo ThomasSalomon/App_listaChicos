@@ -8,6 +8,7 @@ import React, { useState } from 'react';
 import ChildItem from './ChildItem';
 import ChildForm from './ChildForm';
 import ConfirmDialog from './ConfirmDialog';
+import { importExportService } from '../services/importExportService';
 import type { Team, Child, CreateChildData, UpdateChildData } from '../types';
 
 export interface ChildListProps {
@@ -20,6 +21,7 @@ export interface ChildListProps {
   onDeleteChild: (id: number) => void;
   onMoveChild: (child: Child) => void; // Recibe el objeto Child
   onClearAll: () => void;
+  onImport?: () => void; // Nueva prop para importar
 }
 
 const ChildList: React.FC<ChildListProps> = React.memo(({ 
@@ -31,7 +33,8 @@ const ChildList: React.FC<ChildListProps> = React.memo(({
   onUpdateChild, 
   onDeleteChild, 
   onMoveChild, 
-  onClearAll 
+  onClearAll,
+  onImport // Nueva prop para importar
 }) => {
   const [showForm, setShowForm] = useState(false);
   const [editingChild, setEditingChild] = useState<Child | null>(null);
@@ -99,6 +102,19 @@ const ChildList: React.FC<ChildListProps> = React.memo(({
   const handleCancelClearAll = () => {
     setShowClearConfirm(false);
   };
+
+  const handleExportTeamChildren = async () => {
+    try {
+      await importExportService.exportChildren({
+        format: 'excel',
+        teamId: team.id
+      });
+    } catch (error) {
+      console.error('Error al exportar niños del equipo:', error);
+      alert('Error al exportar niños del equipo');
+    }
+  };
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -169,6 +185,25 @@ const ChildList: React.FC<ChildListProps> = React.memo(({
                 Limpiar Lista
               </button>
             )}
+
+            {/* Botones de Importar/Exportar */}
+            {onImport && (
+              <button
+                onClick={onImport}
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-all duration-200 hover:shadow-md"
+              >
+                <i className="bi bi-upload mr-2"></i>
+                Importar
+              </button>
+            )}
+            
+            <button
+              onClick={() => handleExportTeamChildren()}
+              className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-all duration-200 hover:shadow-md"
+            >
+              <i className="bi bi-download mr-2"></i>
+              Exportar Niños
+            </button>
           </div>
           
           <div className="flex items-center space-x-2">

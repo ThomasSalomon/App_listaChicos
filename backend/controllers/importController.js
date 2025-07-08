@@ -9,7 +9,6 @@
 const XLSX = require('xlsx');
 const database = require('../config/database');
 const { successResponse, errorResponse } = require('../utils/response');
-const { formatResponse, formatError } = require('../utils/response');
 
 class ImportController {
   /**
@@ -61,7 +60,7 @@ class ImportController {
   async importChildren(req, res) {
     try {
       if (!req.file) {
-        return res.status(400).json(formatError('No se subió ningún archivo', 400));
+        return this.sendError(res, 'No se subió ningún archivo', 400);
       }
 
       // Leer archivo Excel/CSV
@@ -76,7 +75,7 @@ class ImportController {
       });
 
       if (rawData.length < 2) {
-        return res.status(400).json(formatError('El archivo debe tener al menos una fila de datos además del encabezado', 400));
+        return this.sendError(res, 'El archivo debe tener al menos una fila de datos además del encabezado', 400);
       }
 
       // Primera fila son los headers
@@ -87,7 +86,7 @@ class ImportController {
       const headerMap = this.mapHeaders(headers);
       
       if (!headerMap.name) {
-        return res.status(400).json(formatError('No se encontró una columna de nombre válida. Columnas esperadas: nombre, name, niño, child', 400));
+        return this.sendError(res, 'No se encontró una columna de nombre válida. Columnas esperadas: nombre, name, niño, child', 400);
       }
 
       // Procesar datos
@@ -185,7 +184,7 @@ class ImportController {
 
     } catch (error) {
       console.error('Error en importación de niños:', error);
-      res.status(500).json(formatError('Error interno del servidor durante la importación', 500));
+      return this.sendError(res, 'Error interno del servidor durante la importación', 500);
     }
   }
 
@@ -195,7 +194,7 @@ class ImportController {
   async importTeams(req, res) {
     try {
       if (!req.file) {
-        return res.status(400).json(formatError('No se subió ningún archivo', 400));
+        return this.sendError(res, 'No se subió ningún archivo', 400);
       }
 
       const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
@@ -208,7 +207,7 @@ class ImportController {
       });
 
       if (rawData.length < 2) {
-        return res.status(400).json(formatError('El archivo debe tener al menos una fila de datos además del encabezado', 400));
+        return this.sendError(res, 'El archivo debe tener al menos una fila de datos además del encabezado', 400);
       }
 
       const headers = rawData[0];
@@ -217,7 +216,7 @@ class ImportController {
       const headerMap = this.mapTeamHeaders(headers);
       
       if (!headerMap.name) {
-        return res.status(400).json(formatError('No se encontró una columna de nombre válida para equipos', 400));
+        return this.sendError(res, 'No se encontró una columna de nombre válida para equipos', 400);
       }
 
       const results = {
@@ -309,7 +308,7 @@ class ImportController {
 
     } catch (error) {
       console.error('Error en importación de equipos:', error);
-      res.status(500).json(formatError('Error interno del servidor durante la importación', 500));
+      return this.sendError(res, 'Error interno del servidor durante la importación', 500);
     }
   }
 
@@ -455,7 +454,7 @@ class ImportController {
 
     } catch (error) {
       console.error('Error generando template:', error);
-      res.status(500).json(formatError('Error generando template', 500));
+      return this.sendError(res, 'Error generando template', 500);
     }
   }
 
@@ -492,7 +491,7 @@ class ImportController {
 
     } catch (error) {
       console.error('Error generando template:', error);
-      res.status(500).json(formatError('Error generando template', 500));
+      return this.sendError(res, 'Error generando template', 500);
     }
   }
 }

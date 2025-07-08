@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import ChildList from '../components/ChildList';
 import MoveChildModal from '../components/MoveChildModal';
-import { ImportModal, ExportMenu } from '../components';
+import { ImportModal } from '../components';
 import { useChildOperations } from '../hooks/useChildOperations';
 import { useHighlight } from '../contexts/HighlightContext';
 import { useApp } from '../contexts/AppContext';
@@ -44,37 +44,6 @@ const ChildrenView: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50">
-      {/* Barra de herramientas */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={navigateToTeams}
-              className="flex items-center space-x-2 text-gray-600 hover:text-gray-800"
-            >
-              <span>←</span>
-              <span>Volver a equipos</span>
-            </button>
-            <div className="text-sm text-gray-500">|</div>
-            <h1 className="text-lg font-semibold text-gray-900">
-              {appState.selectedTeam.nombre}
-            </h1>
-          </div>
-          
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={() => setShowImportModal(true)}
-              className="flex items-center space-x-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
-            >
-              <span>📥</span>
-              <span>Importar</span>
-            </button>
-            
-            <ExportMenu type="children" />
-          </div>
-        </div>
-      </div>
-
       <ChildList
         team={appState.selectedTeam}
         children={children}
@@ -85,6 +54,7 @@ const ChildrenView: React.FC = () => {
         onDeleteChild={handleDeleteChild}
         onMoveChild={handleMoveChild}
         onClearAll={handleClearAllChildren}
+        onImport={() => setShowImportModal(true)}
       />
 
       <MoveChildModal
