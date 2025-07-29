@@ -1,18 +1,11 @@
+/**
+ * Tests para el modelo Teams
+ */
+
 const TeamsModel = require('../models/Teams');
-const testDatabase = require('./testDatabase');
 
 describe('Teams Model', () => {
-  beforeEach(async () => {
-    // Limpiar datos de test
-    await testDatabase.cleanTables();
-  });
-
-  afterAll(async () => {
-    // Cleanup final
-    await testDatabase.close();
-  });
-
-  describe('create', () => {
+  describe('crear', () => {
     test('debe crear un equipo correctamente', async () => {
       const teamData = {
         nombre: 'Equipo Test',
@@ -20,7 +13,7 @@ describe('Teams Model', () => {
         color: '#FF0000'
       };
 
-      const result = await TeamsModel.create(teamData);
+      const result = await TeamsModel.crear(teamData);
 
       expect(result).toBeDefined();
       expect(result.id).toBeDefined();
@@ -35,7 +28,7 @@ describe('Teams Model', () => {
         color: '#FF0000'
       };
 
-      await expect(TeamsModel.create(teamData)).rejects.toThrow();
+      await expect(TeamsModel.crear(teamData)).rejects.toThrow();
     });
 
     test('debe usar color por defecto si no se proporciona', async () => {
@@ -44,42 +37,42 @@ describe('Teams Model', () => {
         descripcion: 'Descripción del equipo'
       };
 
-      const result = await TeamsModel.create(teamData);
+      const result = await TeamsModel.crear(teamData);
 
       expect(result.color).toBeDefined();
       expect(result.color).toMatch(/^#[0-9A-F]{6}$/i); // Formato hex válido
     });
   });
 
-  describe('getAll', () => {
+  describe('obtenerTodos', () => {
     test('debe retornar un array vacío si no hay equipos', async () => {
-      const teams = await TeamsModel.getAll();
+      const teams = await TeamsModel.obtenerTodos();
       expect(Array.isArray(teams)).toBe(true);
       expect(teams.length).toBe(0);
     });
 
     test('debe retornar todos los equipos activos', async () => {
       // Crear algunos equipos de prueba
-      await TeamsModel.create({
+      await TeamsModel.crear({
         nombre: 'Equipo 1',
         descripcion: 'Primer equipo',
         color: '#FF0000'
       });
 
-      await TeamsModel.create({
+      await TeamsModel.crear({
         nombre: 'Equipo 2',
         descripcion: 'Segundo equipo',
         color: '#00FF00'
       });
 
-      const teams = await TeamsModel.getAll();
+      const teams = await TeamsModel.obtenerTodos();
       expect(teams.length).toBe(2);
       expect(teams[0].nombre).toBeDefined();
       expect(teams[1].nombre).toBeDefined();
     });
   });
 
-  describe('getById', () => {
+  describe('obtenerPorId', () => {
     test('debe retornar el equipo correcto por ID', async () => {
       const teamData = {
         nombre: 'Equipo Específico',
@@ -87,8 +80,8 @@ describe('Teams Model', () => {
         color: '#0000FF'
       };
 
-      const createdTeam = await TeamsModel.create(teamData);
-      const foundTeam = await TeamsModel.getById(createdTeam.id);
+      const createdTeam = await TeamsModel.crear(teamData);
+      const foundTeam = await TeamsModel.obtenerPorId(createdTeam.id);
 
       expect(foundTeam).toBeDefined();
       expect(foundTeam.id).toBe(createdTeam.id);
@@ -96,20 +89,20 @@ describe('Teams Model', () => {
     });
 
     test('debe retornar null si el ID no existe', async () => {
-      const foundTeam = await TeamsModel.getById(999999);
+      const foundTeam = await TeamsModel.obtenerPorId(999999);
       expect(foundTeam).toBeNull();
     });
   });
 
-  describe('update', () => {
-    test('debe update un equipo correctamente', async () => {
+  describe('actualizar', () => {
+    test('debe actualizar un equipo correctamente', async () => {
       const teamData = {
         nombre: 'Equipo Original',
         descripcion: 'Descripción original',
         color: '#FF0000'
       };
 
-      const createdTeam = await TeamsModel.create(teamData);
+      const createdTeam = await TeamsModel.crear(teamData);
 
       const updateData = {
         nombre: 'Equipo Actualizado',
@@ -117,7 +110,7 @@ describe('Teams Model', () => {
         color: '#00FF00'
       };
 
-      const updatedTeam = await TeamsModel.update(createdTeam.id, updateData);
+      const updatedTeam = await TeamsModel.actualizar(createdTeam.id, updateData);
 
       expect(updatedTeam.nombre).toBe(updateData.nombre);
       expect(updatedTeam.descripcion).toBe(updateData.descripcion);
@@ -129,11 +122,11 @@ describe('Teams Model', () => {
         nombre: 'Equipo No Existe'
       };
 
-      await expect(TeamsModel.update(999999, updateData)).rejects.toThrow();
+      await expect(TeamsModel.actualizar(999999, updateData)).rejects.toThrow();
     });
   });
 
-  describe('delete', () => {
+  describe('eliminar', () => {
     test('debe marcar un equipo como inactivo', async () => {
       const teamData = {
         nombre: 'Equipo a Eliminar',
@@ -141,15 +134,15 @@ describe('Teams Model', () => {
         color: '#FF0000'
       };
 
-      const createdTeam = await TeamsModel.create(teamData);
-      await TeamsModel.delete(createdTeam.id);
+      const createdTeam = await TeamsModel.crear(teamData);
+      await TeamsModel.eliminar(createdTeam.id);
 
-      const foundTeam = await TeamsModel.getById(createdTeam.id);
+      const foundTeam = await TeamsModel.obtenerPorId(createdTeam.id);
       expect(foundTeam).toBeNull(); // No debe aparecer en búsquedas normales
     });
 
     test('debe fallar si el equipo no existe', async () => {
-      await expect(TeamsModel.delete(999999)).rejects.toThrow();
+      await expect(TeamsModel.eliminar(999999)).rejects.toThrow();
     });
   });
 });

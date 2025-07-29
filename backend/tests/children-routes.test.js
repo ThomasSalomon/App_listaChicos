@@ -1,16 +1,19 @@
 const request = require('supertest');
 const app = require('../server');
-const testDatabase = require('./testDatabase');
+const db = require('../config/database');
 
 describe('Children Routes', () => {
   beforeEach(async () => {
     // Limpiar datos de test
-    await testDatabase.cleanTables();
+    await db.prepare('DELETE FROM children').run();
+    await db.prepare('DELETE FROM teams').run();
   });
 
   afterAll(async () => {
     // Cleanup final
-    await testDatabase.close();
+    await db.prepare('DELETE FROM children').run();
+    await db.prepare('DELETE FROM teams').run();
+    db.close();
   });
 
   describe('POST /api/children', () => {

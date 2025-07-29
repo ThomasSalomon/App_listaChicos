@@ -12,7 +12,7 @@ describe('Children Model', () => {
     await testDatabase.close();
   });
 
-  describe('create', () => {
+  describe('createChild', () => {
     it('should create a child with valid data', async () => {
       const childData = {
         name: 'Juan Pérez',
@@ -22,13 +22,13 @@ describe('Children Model', () => {
         team_id: null
       };
 
-      const result = await Children.create(childData);
+      const result = await Children.createChild(childData);
       
-      expect(result).toBeDefined();
-      expect(result.id).toBeDefined();
-      expect(result.name).toBe(childData.name);
-      expect(result.age).toBe(childData.age);
-      expect(result.weight).toBe(childData.weight);
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveProperty('id');
+      expect(result.data.name).toBe(childData.name);
+      expect(result.data.age).toBe(childData.age);
+      expect(result.data.weight).toBe(childData.weight);
     });
 
     it('should fail with missing required fields', async () => {
@@ -38,33 +38,48 @@ describe('Children Model', () => {
         // name is missing
       };
 
-      await expect(Children.create(invalidData)).rejects.toThrow();
+      const result = await Children.createChild(invalidData);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('name');
     });
 
-    it('should create child with default values', async () => {
-      const childData = {
+    it('should validate age range', async () => {
+      const invalidAgeData = {
         name: 'Test Child',
-        age: 10,
+        age: 25, // Invalid age
         weight: 35.5,
         position: 'Defensa'
       };
 
-      const result = await Children.create(childData);
-      expect(result).toBeDefined();
-      expect(result.team_id).toBeNull();
+      const result = await Children.createChild(invalidAgeData);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('edad');
+    });
+
+    it('should validate weight range', async () => {
+      const invalidWeightData = {
+        name: 'Test Child',
+        age: 10,
+        weight: 150, // Invalid weight
+        position: 'Defensa'
+      };
+
+      const result = await Children.createChild(invalidWeightData);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('peso');
     });
   });
 
-  describe('getAll', () => {
+  describe('getAllChildren', () => {
     beforeEach(async () => {
       // Crear datos de prueba
-      await Children.create({
+      await Children.createChild({
         name: 'Child 1',
         age: 8,
         weight: 30,
         position: 'Portero'
       });
-      await Children.create({
+      await Children.createChild({
         name: 'Child 2',
         age: 12,
         weight: 40,
@@ -73,34 +88,34 @@ describe('Children Model', () => {
     });
 
     it('should return all children', async () => {
-      const result = await Children.getAll();
+      const result = await Children.getAllChildren();
       
-      expect(Array.isArray(result)).toBe(true);
-      expect(result).toHaveLength(2);
-      expect(result[0]).toHaveProperty('name');
-      expect(result[0]).toHaveProperty('age');
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(2);
+      expect(result.data[0]).toHaveProperty('name');
+      expect(result.data[0]).toHaveProperty('age');
     });
 
     it('should return empty array when no children exist', async () => {
-      await testDatabase.cleanTables();
+      await db.prepare('DELETE FROM children').run();
       
-      const result = await Children.getAll();
-      expect(Array.isArray(result)).toBe(true);
-      expect(result).toHaveLength(0);
+      const result = await Children.getAllChildren();
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(0);
     });
   });
 
-  describe('update', () => {
+  describe('updateChild', () => {
     let childId;
 
     beforeEach(async () => {
-      const child = await Children.create({
+      const child = await Children.createChild({
         name: 'Original Name',
         age: 10,
         weight: 35,
         position: 'Medio'
       });
-      childId = child.id;
+      childId = child.data.id;
     });
 
     it('should update child data', async () => {
@@ -110,67 +125,124 @@ describe('Children Model', () => {
         weight: 37
       };
 
-      const result = await Children.update(childId, updateData);
+      const result = await Children.updateChild(childId, updateData);
       
-      expect(result).toBeDefined();
-      expect(result.name).toBe(updateData.name);
-      expect(result.age).toBe(updateData.age);
-      expect(result.weight).toBe(updateData.weight);
+      expect(result.success).toBe(true);
+      expect(result.data.name).toBe(updateData.name);
+      expect(result.data.age).toBe(updateData.age);
+      expect(result.data.weight).toBe(updateData.weight);
     });
 
     it('should fail with invalid child ID', async () => {
-      await expect(Children.update(99999, { name: 'Test' })).rejects.toThrow();
+      const result = await Children.updateChild(99999, { name: 'Test' });
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('no encontrado');
+    });
+
+    it('should validate updated data', async () => {
+      const invalidData = {
+        age: 25 // Invalid age
+      };
+
+      const result = await Children.updateChild(childId, invalidData);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('edad');
     });
   });
 
-  describe('delete', () => {
+  describe('deleteChild', () => {
     let childId;
 
     beforeEach(async () => {
-      const child = await Children.create({
+      const child = await Children.createChild({
         name: 'To Delete',
         age: 10,
         weight: 35,
         position: 'Delantero'
       });
-      childId = child.id;
+      childId = child.data.id;
     });
 
     it('should delete existing child', async () => {
-      await Children.delete(childId);
+      const result = await Children.deleteChild(childId);
+      expect(result.success).toBe(true);
 
       // Verificar que ya no existe
-      await expect(Children.getById(childId)).rejects.toThrow();
+      const getResult = await Children.getChildById(childId);
+      expect(getResult.success).toBe(false);
     });
 
     it('should fail with non-existent child ID', async () => {
-      await expect(Children.delete(99999)).rejects.toThrow();
+      const result = await Children.deleteChild(99999);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('no encontrado');
     });
   });
 
-  describe('getById', () => {
-    let childId;
+  describe('searchChildren', () => {
+    beforeEach(async () => {
+      await Children.createChild({ name: 'Juan Carlos', age: 10, weight: 35, position: 'Portero' });
+      await Children.createChild({ name: 'María Fernández', age: 9, weight: 32, position: 'Defensa' });
+      await Children.createChild({ name: 'Carlos Rodríguez', age: 11, weight: 38, position: 'Medio' });
+    });
+
+    it('should search by name', async () => {
+      const result = await Children.searchChildren('Carlos');
+      
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(2);
+      expect(result.data.every(child => child.name.includes('Carlos'))).toBe(true);
+    });
+
+    it('should search by position', async () => {
+      const result = await Children.searchChildren('Portero');
+      
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].position).toBe('Portero');
+    });
+
+    it('should return empty for non-matching search', async () => {
+      const result = await Children.searchChildren('NoExiste');
+      
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(0);
+    });
+  });
+
+  describe('moveChildToTeam', () => {
+    let childId, teamId;
 
     beforeEach(async () => {
-      const child = await Children.create({
+      // Crear niño de prueba
+      const child = await Children.createChild({
         name: 'Test Child',
         age: 10,
         weight: 35,
         position: 'Medio'
       });
-      childId = child.id;
+      childId = child.data.id;
+
+      // Crear equipo de prueba (simulado)
+      teamId = 1;
     });
 
-    it('should get child by ID', async () => {
-      const result = await Children.getById(childId);
+    it('should move child to team', async () => {
+      const result = await Children.moveChildToTeam(childId, teamId);
       
-      expect(result).toBeDefined();
-      expect(result.id).toBe(childId);
-      expect(result.name).toBe('Test Child');
+      expect(result.success).toBe(true);
+      expect(result.data.team_id).toBe(teamId);
     });
 
-    it('should fail with non-existent ID', async () => {
-      await expect(Children.getById(99999)).rejects.toThrow();
+    it('should remove child from team (set to null)', async () => {
+      // Primero asignar a equipo
+      await Children.moveChildToTeam(childId, teamId);
+      
+      // Luego remover
+      const result = await Children.moveChildToTeam(childId, null);
+      
+      expect(result.success).toBe(true);
+      expect(result.data.team_id).toBeNull();
     });
   });
 });
